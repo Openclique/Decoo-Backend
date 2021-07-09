@@ -6,11 +6,6 @@ frameworkVersion: '2'
 
 custom:
   tableName: 'places'
-#   dynamodb:
-#     start:
-#       migrate: true
-#     stages:
-#       - dev
 
 provider:
   name: aws
@@ -36,13 +31,15 @@ provider:
     PLACES_TABLE: ${self:custom.tableName}
 
 functions:
-  getPoints:
-    description: My function
-    handler: handler.places
+  api:
+    handler: handler.handler
     events:
       - http:
-          path: /places/nearby/latitude/{latitude}/longitude/{longitude}
-          method: GET
+          path: /
+          method: ANY
+      - http:
+          path: /{proxy+}
+          method: ANY
 
 resources:
   Resources:
