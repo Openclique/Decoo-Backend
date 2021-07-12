@@ -34,6 +34,8 @@ provider:
         - dynamodb:GetItem
         - dynamodb:PutItem
         - dynamodb:UpdateItem
+        - s3:PutBucketPolicy
+        - s3:UpdateBucketPolicy
       Resource: "*"
 
 functions:
