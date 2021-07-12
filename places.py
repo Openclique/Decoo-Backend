@@ -1,6 +1,5 @@
 import json
 
-
 def nearby(event, context):
     body = {
         "message": "Go Serverless v1.0! Your function executed successfully!",
