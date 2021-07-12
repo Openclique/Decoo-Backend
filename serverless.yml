@@ -1,62 +1,68 @@
-org: decoo
-app: decoo
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
 service: decoo
+# app and org for use with dashboard.serverless.com
+app: decoo
+org: decoo
 
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
 frameworkVersion: '2'
-
-custom:
-  tableName: 'places'
 
 provider:
   name: aws
-  runtime: nodejs12.x
-  lambdaHashingVersion: '20201221'
+  runtime: python3.8
+  lambdaHashingVersion: 20201221
   stage: dev
   region: us-west-1
-  apiName: decoo
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - dynamodb:Query
-            - dynamodb:Scan
-            - dynamodb:GetItem
-            - dynamodb:PutItem
-            - dynamodb:UpdateItem
-            - dynamodb:DeleteItem
-          Resource:
-            - Fn::GetAtt: [ UsersTable, Arn ]
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+      Resource: "*"
   environment:
-    PLACES_TABLE: ${self:custom.tableName}
+    ACCESS_KEY_ID: AKIAVPM4WHYNFKBH27QS
+    SECRET_ACCESS_KEY: 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
 
 functions:
-  api:
-    handler: handler.handler
+  nearbyPlaces:
+    handler: places.nearby
     events:
-      - http:
-          path: /
-          method: ANY
-      - http:
-          path: /{proxy+}
-          method: ANY
+    - httpApi:
+      path: /places/nearby
+      method: post
 
 resources:
   Resources:
-    UsersTable:
+    placeTable:
       Type: AWS::DynamoDB::Table
       Properties:
+        TableName: places
         AttributeDefinitions:
-          - AttributeName: userId
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: geohash
             AttributeType: S
         KeySchema:
-          - AttributeName: userId
+          - AttributeName: id
             KeyType: HASH
+          - AttributeName: geohash
+            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        TableName: ${self:custom.tableName}
-
-plugins:
-  - serverless-dynamodb-local
-  - serverless-offline

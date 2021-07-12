@@ -71,10 +71,10 @@
         }
       }
     },
-    "GetPointsLogGroup": {
+    "NearbyPlacesLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
-        "LogGroupName": "/aws/lambda/decoo-dev-getPoints"
+        "LogGroupName": "/aws/lambda/decoo-dev-nearbyPlaces"
       }
     },
     "IamRoleLambdaExecution": {
@@ -141,17 +141,9 @@
                     "dynamodb:Scan",
                     "dynamodb:GetItem",
                     "dynamodb:PutItem",
-                    "dynamodb:UpdateItem",
-                    "dynamodb:DeleteItem"
+                    "dynamodb:UpdateItem"
                   ],
-                  "Resource": [
-                    {
-                      "Fn::GetAtt": [
-                        "UsersTable",
-                        "Arn"
-                      ]
-                    }
-                  ]
+                  "Resource": "*"
                 }
               ]
             }
@@ -207,7 +199,7 @@
                   "Resource": [
                     {
                       "Fn::GetAtt": [
-                        "GetPointsLogGroup",
+                        "NearbyPlacesLogGroup",
                         "Arn"
                       ]
                     }
@@ -219,24 +211,24 @@
         ]
       }
     },
-    "GetPointsLambdaFunction": {
+    "NearbyPlacesLambdaFunction": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Code": {
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/decoo/dev/1625848019965-2021-07-09T16:26:59.965Z/decoo.zip"
+          "S3Key": "serverless/decoo/dev/1626092983322-2021-07-12T12:29:43.322Z/decoo.zip"
         },
-        "Handler": "s_getPoints.handler",
-        "Runtime": "nodejs12.x",
-        "FunctionName": "decoo-dev-getPoints",
+        "Handler": "s_nearbyPlaces.handler",
+        "Runtime": "python3.8",
+        "FunctionName": "decoo-dev-nearbyPlaces",
         "MemorySize": 1024,
         "Timeout": 6,
-        "Description": "My function",
         "Environment": {
           "Variables": {
-            "PLACES_TABLE": "places"
+            "ACCESS_KEY_ID": "AKIAVPM4WHYNFKBH27QS",
+            "SECRET_ACCESS_KEY": "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"
           }
         },
         "Role": {
@@ -247,368 +239,56 @@
         }
       },
       "DependsOn": [
-        "GetPointsLogGroup"
+        "NearbyPlacesLogGroup"
       ]
     },
-    "GetPointsLambdaVersionIX30XM1Rmurq9e4MffsHSf7UQuLy40lcktmEe55gLY": {
+    "NearbyPlacesLambdaVersion8KJSF0amE0QjiWQkqYKWrkCMJuc7XSH8V1PSBA3b2x0": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
-          "Ref": "GetPointsLambdaFunction"
+          "Ref": "NearbyPlacesLambdaFunction"
         },
-        "CodeSha256": "UOHS5XsqjquGKm4nhn1WXWU1TFpJPPGyE4OTNFWLCFU=",
-        "Description": "My function"
+        "CodeSha256": "Y1Q3vaw5E7lW93UjuRKbi70WcEy1pp5Od/uZJY5Sqm4="
       }
     },
-    "ApiGatewayRestApi": {
-      "Type": "AWS::ApiGateway::RestApi",
-      "Properties": {
-        "Name": "decoo",
-        "EndpointConfiguration": {
-          "Types": [
-            "EDGE"
-          ]
-        },
-        "Policy": ""
-      }
-    },
-    "ApiGatewayResourcePlaces": {
-      "Type": "AWS::ApiGateway::Resource",
-      "Properties": {
-        "ParentId": {
-          "Fn::GetAtt": [
-            "ApiGatewayRestApi",
-            "RootResourceId"
-          ]
-        },
-        "PathPart": "places",
-        "RestApiId": {
-          "Ref": "ApiGatewayRestApi"
-        }
-      }
-    },
-    "ApiGatewayResourcePlacesNearby": {
-      "Type": "AWS::ApiGateway::Resource",
-      "Properties": {
-        "ParentId": {
-          "Ref": "ApiGatewayResourcePlaces"
-        },
-        "PathPart": "nearby",
-        "RestApiId": {
-          "Ref": "ApiGatewayRestApi"
-        }
-      }
-    },
-    "ApiGatewayResourcePlacesNearbyLatitude": {
-      "Type": "AWS::ApiGateway::Resource",
-      "Properties": {
-        "ParentId": {
-          "Ref": "ApiGatewayResourcePlacesNearby"
-        },
-        "PathPart": "latitude",
-        "RestApiId": {
-          "Ref": "ApiGatewayRestApi"
-        }
-      }
-    },
-    "ApiGatewayResourcePlacesNearbyLatitudeLatitudeVar": {
-      "Type": "AWS::ApiGateway::Resource",
-      "Properties": {
-        "ParentId": {
-          "Ref": "ApiGatewayResourcePlacesNearbyLatitude"
-        },
-        "PathPart": "{latitude}",
-        "RestApiId": {
-          "Ref": "ApiGatewayRestApi"
-        }
-      }
-    },
-    "ApiGatewayResourcePlacesNearbyLatitudeLatitudeVarLongitude": {
-      "Type": "AWS::ApiGateway::Resource",
-      "Properties": {
-        "ParentId": {
-          "Ref": "ApiGatewayResourcePlacesNearbyLatitudeLatitudeVar"
-        },
-        "PathPart": "longitude",
-        "RestApiId": {
-          "Ref": "ApiGatewayRestApi"
-        }
-      }
-    },
-    "ApiGatewayResourcePlacesNearbyLatitudeLatitudeVarLongitudeLongitudeVar": {
-      "Type": "AWS::ApiGateway::Resource",
-      "Properties": {
-        "ParentId": {
-          "Ref": "ApiGatewayResourcePlacesNearbyLatitudeLatitudeVarLongitude"
-        },
-        "PathPart": "{longitude}",
-        "RestApiId": {
-          "Ref": "ApiGatewayRestApi"
-        }
-      }
-    },
-    "ApiGatewayMethodPlacesNearbyLatitudeLatitudeVarLongitudeLongitudeVarGet": {
-      "Type": "AWS::ApiGateway::Method",
-      "Properties": {
-        "HttpMethod": "GET",
-        "RequestParameters": {},
-        "ResourceId": {
-          "Ref": "ApiGatewayResourcePlacesNearbyLatitudeLatitudeVarLongitudeLongitudeVar"
-        },
-        "RestApiId": {
-          "Ref": "ApiGatewayRestApi"
-        },
-        "ApiKeyRequired": false,
-        "AuthorizationType": "NONE",
-        "Integration": {
-          "IntegrationHttpMethod": "POST",
-          "Type": "AWS_PROXY",
-          "Uri": {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition"
-                },
-                ":apigateway:",
-                {
-                  "Ref": "AWS::Region"
-                },
-                ":lambda:path/2015-03-31/functions/",
-                {
-                  "Fn::GetAtt": [
-                    "GetPointsLambdaFunction",
-                    "Arn"
-                  ]
-                },
-                "/invocations"
-              ]
-            ]
-          }
-        },
-        "MethodResponses": []
-      },
-      "DependsOn": [
-        "GetPointsLambdaPermissionApiGateway"
-      ]
-    },
-    "ApiGatewayDeployment1625848003342": {
-      "Type": "AWS::ApiGateway::Deployment",
-      "Properties": {
-        "RestApiId": {
-          "Ref": "ApiGatewayRestApi"
-        },
-        "StageName": "dev"
-      },
-      "DependsOn": [
-        "ApiGatewayMethodPlacesNearbyLatitudeLatitudeVarLongitudeLongitudeVarGet"
-      ]
-    },
-    "GetPointsLambdaPermissionApiGateway": {
-      "Type": "AWS::Lambda::Permission",
-      "Properties": {
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "GetPointsLambdaFunction",
-            "Arn"
-          ]
-        },
-        "Action": "lambda:InvokeFunction",
-        "Principal": "apigateway.amazonaws.com",
-        "SourceArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition"
-              },
-              ":execute-api:",
-              {
-                "Ref": "AWS::Region"
-              },
-              ":",
-              {
-                "Ref": "AWS::AccountId"
-              },
-              ":",
-              {
-                "Ref": "ApiGatewayRestApi"
-              },
-              "/*/*"
-            ]
-          ]
-        }
-      }
-    },
-    "ApiGatewayLogGroup": {
-      "Type": "AWS::Logs::LogGroup",
-      "Properties": {
-        "LogGroupName": "/aws/api-gateway/decoo-dev"
-      }
-    },
-    "CustomApiGatewayAccountCloudWatchRole": {
-      "Type": "Custom::ApiGatewayAccountRole",
-      "Version": 1,
-      "Properties": {
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "CustomDashresourceDashapigwDashcwDashroleLambdaFunction",
-            "Arn"
-          ]
-        }
-      }
-    },
-    "IamRoleCustomResourcesLambdaExecution": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": [
-                  "lambda.amazonaws.com"
-                ]
-              },
-              "Action": [
-                "sts:AssumeRole"
-              ]
-            }
-          ]
-        },
-        "Policies": [
-          {
-            "PolicyName": {
-              "Fn::Join": [
-                "-",
-                [
-                  "dev",
-                  "decoo",
-                  "custom-resources-lambda"
-                ]
-              ]
-            },
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::Join": [
-                      ":",
-                      [
-                        "arn",
-                        {
-                          "Ref": "AWS::Partition"
-                        },
-                        "iam:",
-                        {
-                          "Ref": "AWS::AccountId"
-                        },
-                        "role/*"
-                      ]
-                    ]
-                  },
-                  "Action": [
-                    "iam:AttachRolePolicy",
-                    "iam:CreateRole",
-                    "iam:ListAttachedRolePolicies",
-                    "iam:PassRole"
-                  ]
-                },
-                {
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::Join": [
-                      ":",
-                      [
-                        "arn",
-                        {
-                          "Ref": "AWS::Partition"
-                        },
-                        "apigateway:*::/account"
-                      ]
-                    ]
-                  },
-                  "Action": [
-                    "apigateway:GET",
-                    "apigateway:PATCH"
-                  ]
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    "CustomDashresourceDashapigwDashcwDashroleLambdaFunction": {
-      "Type": "AWS::Lambda::Function",
-      "Properties": {
-        "Code": {
-          "S3Bucket": {
-            "Ref": "ServerlessDeploymentBucket"
-          },
-          "S3Key": "serverless/decoo/dev/1625848019965-2021-07-09T16:26:59.965Z/custom-resources.zip"
-        },
-        "FunctionName": "decoo-dev-custom-resource-apigw-cw-role",
-        "Handler": "apiGatewayCloudWatchRole/handler.handler",
-        "MemorySize": 1024,
-        "Runtime": "nodejs12.x",
-        "Timeout": 180,
-        "Role": {
-          "Fn::GetAtt": [
-            "IamRoleCustomResourcesLambdaExecution",
-            "Arn"
-          ]
-        }
-      },
-      "DependsOn": [
-        "IamRoleCustomResourcesLambdaExecution"
-      ]
-    },
-    "UsersTable": {
+    "placeTable": {
       "Type": "AWS::DynamoDB::Table",
       "Properties": {
+        "TableName": "places",
         "AttributeDefinitions": [
           {
-            "AttributeName": "userId",
+            "AttributeName": "id",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "geohash",
             "AttributeType": "S"
           }
         ],
         "KeySchema": [
           {
-            "AttributeName": "userId",
+            "AttributeName": "id",
             "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "geohash",
+            "KeyType": "RANGE"
           }
         ],
         "ProvisionedThroughput": {
           "ReadCapacityUnits": 1,
           "WriteCapacityUnits": 1
-        },
-        "TableName": "places"
+        }
       }
     },
-    "CWLSubFilterGetPointsLogGroupUsWest1": {
+    "CWLSubFilterNearbyPlacesLogGroupUsWest1": {
       "Type": "AWS::Logs::SubscriptionFilter",
       "Properties": {
         "DestinationArn": "arn:aws:logs:us-west-1:802587217904:destination:b91530ba-3651-4caa-b555-b124bfe98f05#1gL63Dsrs3hHpt5Np2#decoo#dev",
         "FilterPattern": "?\"REPORT RequestId: \" ?\"SERVERLESS_ENTERPRISE\"",
         "LogGroupName": {
-          "Ref": "GetPointsLogGroup"
-        }
-      }
-    },
-    "CWLSubFilterApiGatewayLogGroupUsWest1": {
-      "Type": "AWS::Logs::SubscriptionFilter",
-      "Properties": {
-        "DestinationArn": "arn:aws:logs:us-west-1:802587217904:destination:b91530ba-3651-4caa-b555-b124bfe98f05#1gL63Dsrs3hHpt5Np2#decoo#dev",
-        "FilterPattern": "\"SLS_ACCESS_LOG\"",
-        "LogGroupName": {
-          "Ref": "ApiGatewayLogGroup"
+          "Ref": "NearbyPlacesLogGroup"
         }
       }
     }
@@ -633,39 +313,13 @@
         "Name": "sls-decoo-dev-EnterpriseLogAccessIamRole"
       }
     },
-    "GetPointsLambdaFunctionQualifiedArn": {
+    "NearbyPlacesLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "GetPointsLambdaVersionIX30XM1Rmurq9e4MffsHSf7UQuLy40lcktmEe55gLY"
+        "Ref": "NearbyPlacesLambdaVersion8KJSF0amE0QjiWQkqYKWrkCMJuc7XSH8V1PSBA3b2x0"
       },
       "Export": {
-        "Name": "sls-decoo-dev-GetPointsLambdaFunctionQualifiedArn"
-      }
-    },
-    "ServiceEndpoint": {
-      "Description": "URL of the service endpoint",
-      "Value": {
-        "Fn::Join": [
-          "",
-          [
-            "https://",
-            {
-              "Ref": "ApiGatewayRestApi"
-            },
-            ".execute-api.",
-            {
-              "Ref": "AWS::Region"
-            },
-            ".",
-            {
-              "Ref": "AWS::URLSuffix"
-            },
-            "/dev"
-          ]
-        ]
-      },
-      "Export": {
-        "Name": "sls-decoo-dev-ServiceEndpoint"
+        "Name": "sls-decoo-dev-NearbyPlacesLambdaFunctionQualifiedArn"
       }
     }
   }
