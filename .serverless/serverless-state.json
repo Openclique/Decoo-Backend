@@ -167,7 +167,7 @@
                         ]
                       },
                       {
-                        "$ref": "$[\"service\"][\"provider\"][\"iam\"][\"role\"][\"statements\"][0]"
+                        "$ref": "$[\"service\"][\"provider\"][\"iamRoleStatements\"][0]"
                       }
                     ]
                   }
@@ -422,6 +422,10 @@
                 {
                   "AttributeName": "geohash",
                   "KeyType": "HASH"
+                },
+                {
+                  "AttributeName": "geohash",
+                  "KeyType": "RANGE"
                 }
               ],
               "ProvisionedThroughput": {
