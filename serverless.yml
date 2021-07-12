@@ -35,9 +35,6 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
       Resource: "*"
-  environment:
-    ACCESS_KEY_ID: AKIAVPM4WHYNFKBH27QS
-    SECRET_ACCESS_KEY: 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
 
 functions:
   nearbyPlaces:
@@ -49,7 +46,7 @@ functions:
 
 resources:
   Resources:
-    placeTable:
+    placesTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: places
