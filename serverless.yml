@@ -44,7 +44,7 @@ resources:
     placesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: places-${self:provider.stage}
+        TableName: places-${opt:stage, 'test'}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -61,7 +61,7 @@ resources:
     geohashesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: geohashes-${self:provider.stage}
+        TableName: geohashes-${opt:stage, 'test'}
         AttributeDefinitions:
           - AttributeName: geohash
             AttributeType: S
