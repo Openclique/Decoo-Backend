@@ -220,7 +220,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/decoo/test/1626182749366-2021-07-13T13:25:49.366Z/decoo.zip"
+          "S3Key": "serverless/decoo/test/1626188901503-2021-07-13T15:08:21.503Z/decoo.zip"
         },
         "Handler": "s_nearbyPlaces.handler",
         "Runtime": "python3.8",
@@ -238,14 +238,14 @@
         "NearbyPlacesLogGroup"
       ]
     },
-    "NearbyPlacesLambdaVersionUmvROBglnfKmRiQOJCa6BPTmxIc9dyzo1TMRUDeT8Q": {
+    "NearbyPlacesLambdaVersionvsIxZbR7vEO6prUPtzKo0Y7TLAxJ9kI1Mj6eL5qg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "NearbyPlacesLambdaFunction"
         },
-        "CodeSha256": "C6lY5Q3psR4hg02QbBdikE1Mu/Ra4XuuvhVHriXX1oQ="
+        "CodeSha256": "b0pAXLdkXQQQU7bVcBuQHdokMe2dU73TpxDwztNyX5s="
       }
     },
     "HttpApi": {
@@ -455,7 +455,7 @@
     "NearbyPlacesLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "NearbyPlacesLambdaVersionUmvROBglnfKmRiQOJCa6BPTmxIc9dyzo1TMRUDeT8Q"
+        "Ref": "NearbyPlacesLambdaVersionvsIxZbR7vEO6prUPtzKo0Y7TLAxJ9kI1Mj6eL5qg"
       },
       "Export": {
         "Name": "sls-decoo-test-NearbyPlacesLambdaFunctionQualifiedArn"

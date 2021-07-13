@@ -1,22 +1,33 @@
 import json
-from utils.get_geohashes_in_radius import getGeohashesInRadius
-from utils.dynamodb_handler import getGeohashesStatus
+from utils import functions, dynamodb
 
 def nearby(event, context):
 
     body = json.loads(event['body'])
-    
+    places = []
+
     # We get a list of all geohashes in the user's radius
-    hashes = getGeohashesInRadius(float(body["latitude"]), float(body["longitude"]), 10)
+    hashes = functions.getGeohashesInRadius(float(body["latitude"]), float(body["longitude"]), 10)
 
     # Then we check which geohashes need to be updated
-    items = getGeohashesStatus(hashes["five_digits"])
+    items = dynamodb.getGeohashesStatus(hashes["five_digits"])
 
     print(items)
 
+    # We then fetch informations for all geohashes that need to be updated
+    places += functions.fetchPlacesFromApis(items["to_update"])
+
+    # We save these informations on our database
+    dynamodb.batchUpdatePlaces(places)
+
+    # And we query the ones that were already up to date
+    places += dynamodb.fetchPlacesFromDatabase(items["up_to_date"])
+
+    print(places)
+
     response = {
         "statusCode": 200,
-        "body": json.dumps(items)
+        "body": json.dumps(places)
     }
 
     return response
