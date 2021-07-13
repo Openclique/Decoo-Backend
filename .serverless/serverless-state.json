@@ -20,7 +20,9 @@
                 "dynamodb:Scan",
                 "dynamodb:GetItem",
                 "dynamodb:PutItem",
-                "dynamodb:UpdateItem"
+                "dynamodb:UpdateItem",
+                "dynamodb:BatchGetItem",
+                "dynamodb:BatchPutItem"
               ],
               "Resource": "*"
             }
@@ -240,7 +242,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/decoo/test/1626169911561-2021-07-13T09:51:51.561Z/decoo.zip"
+                "S3Key": "serverless/decoo/test/1626182749366-2021-07-13T13:25:49.366Z/decoo.zip"
               },
               "Handler": "s_nearbyPlaces.handler",
               "Runtime": "python3.8",
@@ -258,14 +260,14 @@
               "NearbyPlacesLogGroup"
             ]
           },
-          "NearbyPlacesLambdaVersionnV3fMBkGRCe99zLCqUnoKdysDlt8o1iS5tVrZVpRg": {
+          "NearbyPlacesLambdaVersionUmvROBglnfKmRiQOJCa6BPTmxIc9dyzo1TMRUDeT8Q": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "NearbyPlacesLambdaFunction"
               },
-              "CodeSha256": "mY+qz4DD2whUr8e7Y7CRqEBxcljD77BGD4rG8EyDq1A="
+              "CodeSha256": "C6lY5Q3psR4hg02QbBdikE1Mu/Ra4XuuvhVHriXX1oQ="
             }
           },
           "HttpApi": {
@@ -472,7 +474,7 @@
           "NearbyPlacesLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "NearbyPlacesLambdaVersionnV3fMBkGRCe99zLCqUnoKdysDlt8o1iS5tVrZVpRg"
+              "Ref": "NearbyPlacesLambdaVersionUmvROBglnfKmRiQOJCa6BPTmxIc9dyzo1TMRUDeT8Q"
             },
             "Export": {
               "Name": "sls-decoo-test-NearbyPlacesLambdaFunctionQualifiedArn"
@@ -631,7 +633,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "NearbyPlacesLambdaVersionnV3fMBkGRCe99zLCqUnoKdysDlt8o1iS5tVrZVpRg"
+        "versionLogicalId": "NearbyPlacesLambdaVersionUmvROBglnfKmRiQOJCa6BPTmxIc9dyzo1TMRUDeT8Q"
       }
     },
     "resources": {
@@ -726,7 +728,7 @@
     "artifact": "/Users/arnaud/Github/Decoo/backend/.serverless/decoo.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/decoo/test/1626169911561-2021-07-13T09:51:51.561Z",
+    "artifactDirectoryName": "serverless/decoo/test/1626182749366-2021-07-13T13:25:49.366Z",
     "artifact": "decoo.zip"
   }
 }
