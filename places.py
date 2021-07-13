@@ -1,14 +1,18 @@
 import json
+from utils.get_geohashes_in_radius import getGeohashesInRadius
+from utils.dynamodb_handler import getGeohashesStatus
 
 def nearby(event, context):
-    body = {
-        "message": "Go Serverless v1.0! Your function executed successfully!",
-        "input": event
-    }
+
+    body = json.loads(event['body'])
+    
+    hashes = getGeohashesInRadius(float(body["latitude"]), float(body["longitude"]), 10)
+
+    items = getGeohashesStatus(hashes)
 
     response = {
         "statusCode": 200,
-        "body": json.dumps(body)
+        "body": json.dumps(items)
     }
 
     return response

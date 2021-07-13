@@ -6,6 +6,13 @@ org: decoo
 # Check out our docs for more details
 frameworkVersion: '2'
 
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+
 provider:
   name: aws
   runtime: python3.8
@@ -48,6 +55,19 @@ resources:
             KeyType: HASH
           - AttributeName: geohash
             KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    geohashesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: geohashes
+        AttributeDefinitions:
+          - AttributeName: geohash
+            AttributeType: S
+        KeySchema:
+          - AttributeName: geohash
+            KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
