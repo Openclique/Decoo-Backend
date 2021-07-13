@@ -17,7 +17,7 @@ provider:
   name: aws
   runtime: python3.8
   lambdaHashingVersion: 20201221
-  stage: test
+  stage: test      # Always keep it as test, and to deploy to prod/dev stage just merge your code to dev/master branch on Github
   region: us-west-1
   iam:
     role:
@@ -29,6 +29,8 @@ provider:
           - dynamodb:GetItem
           - dynamodb:PutItem
           - dynamodb:UpdateItem
+          - dynamodb:BatchGetItem
+          - dynamodb:BatchPutItem
         Resource: "*"
 
 functions:
