@@ -19,7 +19,7 @@ def getGeohashesStatus(geohashes):
     }
 
     request = {
-        'geohashes': {
+        'geohashes-dev': {
             'Keys': []
         }
     }
@@ -30,12 +30,18 @@ def getGeohashesStatus(geohashes):
             "geohash": geohash
         })
 
+    print("Here is the batch get item request:")
+    print(request)
+
     try:
         response = dynamodb.batch_get_item(
             RequestItems=request,
         )
-    except ClientError as e:
-        print(e.response['Error']['Message'])
+        print("Successful get")
+        print(response)
+    except Exception as e:
+        print("An error has occured:")
+        print(e)
     
     return response
 

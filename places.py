@@ -8,7 +8,7 @@ def nearby(event, context):
     
     hashes = getGeohashesInRadius(float(body["latitude"]), float(body["longitude"]), 10)
 
-    items = getGeohashesStatus(hashes)
+    items = getGeohashesStatus(hashes["five_digits"])
 
     response = {
         "statusCode": 200,
