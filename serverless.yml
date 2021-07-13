@@ -17,7 +17,7 @@ provider:
   name: aws
   runtime: python3.8
   lambdaHashingVersion: 20201221
-  stage: dev
+  stage: test
   region: us-west-1
   iam:
     role:
@@ -44,7 +44,7 @@ resources:
     placesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: places
+        TableName: places-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -61,7 +61,7 @@ resources:
     geohashesTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: geohashes
+        TableName: geohashes-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: geohash
             AttributeType: S

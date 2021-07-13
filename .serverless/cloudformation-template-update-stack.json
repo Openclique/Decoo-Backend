@@ -74,7 +74,7 @@
     "NearbyPlacesLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
-        "LogGroupName": "/aws/lambda/decoo-dev-nearbyPlaces"
+        "LogGroupName": "/aws/lambda/decoo-test-nearbyPlaces"
       }
     },
     "IamRoleLambdaExecution": {
@@ -103,7 +103,7 @@
                 "-",
                 [
                   "decoo",
-                  "dev",
+                  "test",
                   "lambda"
                 ]
               ]
@@ -119,7 +119,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/decoo-dev*:*"
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/decoo-test*:*"
                     }
                   ]
                 },
@@ -130,7 +130,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/decoo-dev*:*:*"
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/decoo-test*:*:*"
                     }
                   ]
                 },
@@ -155,7 +155,7 @@
             "-",
             [
               "decoo",
-              "dev",
+              "test",
               {
                 "Ref": "AWS::Region"
               },
@@ -218,11 +218,11 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/decoo/dev/1626107442181-2021-07-12T16:30:42.181Z/decoo.zip"
+          "S3Key": "serverless/decoo/test/1626169911561-2021-07-13T09:51:51.561Z/decoo.zip"
         },
         "Handler": "s_nearbyPlaces.handler",
         "Runtime": "python3.8",
-        "FunctionName": "decoo-dev-nearbyPlaces",
+        "FunctionName": "decoo-test-nearbyPlaces",
         "MemorySize": 1024,
         "Timeout": 6,
         "Role": {
@@ -236,27 +236,27 @@
         "NearbyPlacesLogGroup"
       ]
     },
-    "NearbyPlacesLambdaVersionXTDrzIO22KAjLguQn5MJagHJhL3dgPQBwf45gr1CT8": {
+    "NearbyPlacesLambdaVersionnV3fMBkGRCe99zLCqUnoKdysDlt8o1iS5tVrZVpRg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "NearbyPlacesLambdaFunction"
         },
-        "CodeSha256": "R7O97IeXd/CxMLSdg/Abo02uCDmW9GWiHqZbHK30joc="
+        "CodeSha256": "mY+qz4DD2whUr8e7Y7CRqEBxcljD77BGD4rG8EyDq1A="
       }
     },
     "HttpApi": {
       "Type": "AWS::ApiGatewayV2::Api",
       "Properties": {
-        "Name": "dev-decoo",
+        "Name": "test-decoo",
         "ProtocolType": "HTTP"
       }
     },
     "HttpApiLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
-        "LogGroupName": "/aws/http-api/decoo-dev"
+        "LogGroupName": "/aws/http-api/decoo-test"
       }
     },
     "HttpApiStage": {
@@ -360,7 +360,7 @@
     "placesTable": {
       "Type": "AWS::DynamoDB::Table",
       "Properties": {
-        "TableName": "places",
+        "TableName": "places-test",
         "AttributeDefinitions": [
           {
             "AttributeName": "id",
@@ -387,10 +387,32 @@
         }
       }
     },
+    "geohashesTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "geohashes-test",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "geohash",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "geohash",
+            "KeyType": "HASH"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        }
+      }
+    },
     "CWLSubFilterNearbyPlacesLogGroupUsWest1": {
       "Type": "AWS::Logs::SubscriptionFilter",
       "Properties": {
-        "DestinationArn": "arn:aws:logs:us-west-1:802587217904:destination:b91530ba-3651-4caa-b555-b124bfe98f05#1gL63Dsrs3hHpt5Np2#decoo#dev",
+        "DestinationArn": "arn:aws:logs:us-west-1:802587217904:destination:b91530ba-3651-4caa-b555-b124bfe98f05#1gL63Dsrs3hHpt5Np2#decoo#test",
         "FilterPattern": "?\"REPORT RequestId: \" ?\"SERVERLESS_ENTERPRISE\"",
         "LogGroupName": {
           "Ref": "NearbyPlacesLogGroup"
@@ -400,7 +422,7 @@
     "CWLSubFilterHttpApiLogGroupUsWest1": {
       "Type": "AWS::Logs::SubscriptionFilter",
       "Properties": {
-        "DestinationArn": "arn:aws:logs:us-west-1:802587217904:destination:b91530ba-3651-4caa-b555-b124bfe98f05#1gL63Dsrs3hHpt5Np2#decoo#dev",
+        "DestinationArn": "arn:aws:logs:us-west-1:802587217904:destination:b91530ba-3651-4caa-b555-b124bfe98f05#1gL63Dsrs3hHpt5Np2#decoo#test",
         "FilterPattern": "\"SLS_HTTP_API_LOG\"",
         "LogGroupName": {
           "Ref": "HttpApiLogGroup"
@@ -414,7 +436,7 @@
         "Ref": "ServerlessDeploymentBucket"
       },
       "Export": {
-        "Name": "sls-decoo-dev-ServerlessDeploymentBucketName"
+        "Name": "sls-decoo-test-ServerlessDeploymentBucketName"
       }
     },
     "EnterpriseLogAccessIamRole": {
@@ -425,16 +447,16 @@
         ]
       },
       "Export": {
-        "Name": "sls-decoo-dev-EnterpriseLogAccessIamRole"
+        "Name": "sls-decoo-test-EnterpriseLogAccessIamRole"
       }
     },
     "NearbyPlacesLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "NearbyPlacesLambdaVersionXTDrzIO22KAjLguQn5MJagHJhL3dgPQBwf45gr1CT8"
+        "Ref": "NearbyPlacesLambdaVersionnV3fMBkGRCe99zLCqUnoKdysDlt8o1iS5tVrZVpRg"
       },
       "Export": {
-        "Name": "sls-decoo-dev-NearbyPlacesLambdaFunctionQualifiedArn"
+        "Name": "sls-decoo-test-NearbyPlacesLambdaFunctionQualifiedArn"
       }
     },
     "HttpApiId": {
@@ -443,7 +465,7 @@
         "Ref": "HttpApi"
       },
       "Export": {
-        "Name": "sls-decoo-dev-HttpApiId"
+        "Name": "sls-decoo-test-HttpApiId"
       }
     },
     "HttpApiUrl": {
@@ -468,7 +490,7 @@
         ]
       },
       "Export": {
-        "Name": "sls-decoo-dev-HttpApiUrl"
+        "Name": "sls-decoo-test-HttpApiUrl"
       }
     }
   }
