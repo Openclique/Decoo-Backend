@@ -16,7 +16,7 @@ def nearby(event, context):
 
     response = {
         "statusCode": 200,
-        "body": items
+        "body": json.dumps(items)
     }
 
     return response
