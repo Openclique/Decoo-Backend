@@ -70,8 +70,6 @@ resources:
         KeySchema:
           - AttributeName: geohash
             KeyType: HASH
-          - AttributeName: geohash
-            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
