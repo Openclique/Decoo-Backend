@@ -136,6 +136,8 @@ def fetchPlacesFromApis(geohashes):
         # Then we fetch the APIs to get places around this location
         new_places = get_places_around_location(coords.lat,coords.lon)
 
+        print(new_places)
+
         # And we add them to the current list of places
         places.extend(new_places)
 
@@ -146,8 +148,7 @@ def fetchPlacesFromApis(geohashes):
             final_places.append(place)
 
     # We save these informations in our database
-    dynamodb.batchUpdatePlaces(final_places)
+    # dynamodb.batchUpdatePlaces(final_places)
 
     # And we return all places
-
     return final_places
