@@ -66,6 +66,10 @@ def batchUpdatePlaces(places=[]):
         # We loop through each place
         for place in places:
 
+            # If the place doesn't have coordinates we simply skip it
+            if not place['coordinates'] or not place['popular_times']:
+                continue
+
             # We convert lat, lon to 5 and 10 digits geohashes
             ten_digits_hash = geohash.encode(place['coordinates']["lat"], place['coordinates']["lng"], 10)
             five_digits_hash = ten_digits_hash[:5]
