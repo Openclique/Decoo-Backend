@@ -32,6 +32,8 @@ provider:
           - dynamodb:BatchGetItem
           - dynamodb:BatchPutItem
         Resource: "*"
+  environment:
+    API_KEY: ${param:google_api_key}
 
 functions:
   nearbyPlaces:

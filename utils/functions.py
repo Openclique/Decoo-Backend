@@ -2,13 +2,14 @@ import numpy
 import math
 import livepopulartimes
 import requests
+import os
 from geolib import geohash
 
 from utils import dynamodb
-from env.google_api import API_KEY
 
 BASE_URL = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
 TYPE = "bar"
+API_KEY=os.getenv("API_KEY")
 
 def destinationPoint(lat, lng, brng, dist, index):
     '''
