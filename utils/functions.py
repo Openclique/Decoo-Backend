@@ -1,6 +1,14 @@
 import numpy
 import math
+import livepopulartimes
+import requests
 from geolib import geohash
+
+import dynamodb
+
+API_KEY = "AIzaSyDv8hgTbT9HLgaPYYzjFHV1NTy2_sDmpRs"
+BASE_URL = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
+TYPE = "bar"
 
 def destinationPoint(lat, lng, brng, dist, index):
     '''
@@ -60,6 +68,53 @@ def getGeohashesInRadius(latitude, longitude, radius):
 
     return track
 
+def get_info_from_google_api(latitude, longitude):
+    """This function takes in a latitude and a longitude, queris
+    the google places API, then returns a list of places around current location.
+
+    Args:
+        latitude (string): Current user's latitude
+        longitude (string): Currrent user's longitude
+
+    Returns:
+        [{obj}]: Returns a list of places around current user's location
+    """
+
+    # Building the base url
+    url = f"{BASE_URL}location={latitude},{longitude}&radius={2400}&type={TYPE}&key={API_KEY}"
+
+    # Making a request to google places api
+    res = requests.get(url).json()
+
+    return res["results"]
+
+def get_places_around_location(latitude, longitude):
+    """This function queries a list of locations around the user's position using its
+    latitude and longitude. It then uses the livepopulartimes python framework to extract
+    the popular hours and current popularity for the place.
+
+    Args:
+        latitude (string): Current user's latitude
+        longitude (string): Current user's longitude
+
+    Returns:
+        [{obj}]: Returns a list of places around current user's location, with their live traffic
+    """
+
+    places = []
+
+    # First we make an API call to google to get a list of places around current location
+    google_search = get_info_from_google_api(latitude, longitude)
+
+    # Then we make queries to livepopulartimes to get popular times + current popularity for each point
+    for place in google_search:
+        address = f"({place['name']}) {place['vicinity']}"
+        to_add = livepopulartimes.get_populartimes_by_address(address)
+        places.append(to_add)
+
+    # And we return these informations
+    return places
+
 def fetchPlacesFromApis(geohashes):
     '''
     This function takes in a list of geohashes and queries informations from external APIs
@@ -68,4 +123,30 @@ def fetchPlacesFromApis(geohashes):
     Returns:
     :places: ([str]) A list of places informations
     '''
-    return []
+
+    places = []
+
+    # We loop through all geohashes
+    for geo in geohashes:
+
+        # First we convert the geohash to lat lon
+        coords = geohash.decode(geo)
+
+        # Then we fetch the APIs to get places around this location
+        new_places = get_places_around_location(coords.lat,coords.lon)
+
+        # And we add them to the current list of places
+        places.extend(new_places)
+
+    # After that we loop through all the places we queried, and remove all duplicates
+    final_places = []
+    for place in places:
+        if place not in final_places:
+            final_places.append(place)
+
+    # We save these informations in our database
+    dynamodb.batchUpdatePlaces(final_places)
+
+    # And we return all places
+
+    return final_places

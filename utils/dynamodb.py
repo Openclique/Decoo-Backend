@@ -56,6 +56,13 @@ def batchUpdatePlaces(places=[]):
     Returns:
     :bool: True if success, False if error
     '''
+
+    # We loop through each place and converts lat, lon to 5 and 10 digits geohashes
+
+    # Then we update the geohashes table
+
+    # Then we update the places table
+    
     return True
 
 def batchGetItems(table, keys=[], sortKeys=[]):
@@ -121,3 +128,22 @@ def fetchPlacesFromDatabase(geohashes):
 
     response = queryItems(PLACES_TABLE, keys=geohashes)
     return response
+
+def getGeohashesThatNeedToBeUpdated():
+    '''
+    This function scans the dynamodb table and finds all geohashes
+    that have been queried in the last 15 minutes.
+    '''
+
+    now = datetime.now().timestamp()
+    fifteen_min_before = now - 900
+    
+    d_table = dynamodb.Table("geohashes-dev")
+
+    # We get all five_digits geohashes that have been queried in the last 15 minutes
+    hashes_to_update = d_table.scan(
+        FilterExpression=Key('last_query').GreaterThanEquals(fifteen_min_before),
+        AttributesToGet=["geohash"]
+    )["Items"]
+
+    return hashes_to_update
