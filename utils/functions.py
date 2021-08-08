@@ -5,8 +5,8 @@ import requests
 from geolib import geohash
 
 import dynamodb
+from env.google_api import API_KEY
 
-API_KEY = "AIzaSyDv8hgTbT9HLgaPYYzjFHV1NTy2_sDmpRs"
 BASE_URL = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
 TYPE = "bar"
 
