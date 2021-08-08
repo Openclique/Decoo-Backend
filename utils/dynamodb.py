@@ -3,6 +3,8 @@ from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 from datetime import datetime
 from geolib import geohash
+from decimal import Decimal
+import json
 
 dynamodb = boto3.resource('dynamodb')
 PLACES_TABLE = "places-dev"
@@ -74,8 +76,10 @@ def batchUpdatePlaces(places=[]):
             print("Place after adding geohash")
             print(place)
 
+            ddb_data = json.loads(json.dumps(place), parse_float=Decimal)
+
             # Then we update the places table
-            batch.put_item(Item=place)
+            batch.put_item(Item=ddb_data)
 
     
     return True
