@@ -148,7 +148,7 @@ def fetchPlacesFromApis(geohashes):
             final_places.append(place)
 
     # We save these informations in our database
-    # dynamodb.batchUpdatePlaces(final_places)
+    dynamodb.batchUpdatePlaces(final_places)
 
     # And we return all places
     return final_places
