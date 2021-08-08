@@ -4,7 +4,7 @@ import livepopulartimes
 import requests
 from geolib import geohash
 
-import dynamodb
+from utils import dynamodb
 from env.google_api import API_KEY
 
 BASE_URL = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
