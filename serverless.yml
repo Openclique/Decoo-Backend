@@ -31,6 +31,7 @@ provider:
           - dynamodb:UpdateItem
           - dynamodb:BatchGetItem
           - dynamodb:BatchPutItem
+          - dynamodb:BatchWriteItem
         Resource: "*"
   environment:
     API_KEY: ${param:google_api_key}
