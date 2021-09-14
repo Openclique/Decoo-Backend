@@ -7,7 +7,7 @@ def all(event, context):
     """
     This function returns all our points of interest with a current_popularity not null
     """
-    places = dynamodb.fetchAllPlacesFromDatabase("places-dev")
+    places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
 
     response = {
         "statusCode": 200,
