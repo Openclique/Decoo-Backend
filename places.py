@@ -1,5 +1,6 @@
 import json
 from utils import functions, dynamodb
+from decimal import Decimal
 
 RADIUS = 10
 
@@ -9,9 +10,11 @@ def all(event, context):
     """
     places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
 
+    print(places)
+
     response = {
         "statusCode": 200,
-        "body": json.dumps(places)
+        "body": json.dumps(places, parse_float=Decimal)
     }
 
     return response
@@ -43,7 +46,7 @@ def nearby(event, context):
 
     response = {
         "statusCode": 200,
-        "body": json.dumps(places)
+        "body": json.dumps(places, parse_float=Decimal)
     }
 
     return response
