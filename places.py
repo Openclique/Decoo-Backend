@@ -3,6 +3,19 @@ from utils import functions, dynamodb
 
 RADIUS = 10
 
+def all(event, context):
+    """
+    This function returns all our points of interest with a current_popularity not null
+    """
+    places = dynamodb.fetchAllPlacesFromDatabase()
+
+    response = {
+        "statusCode": 200,
+        "body": json.dumps(places)
+    }
+
+    return response
+
 def nearby(event, context):
     '''
     This function is called by the frontend when the user fetches the

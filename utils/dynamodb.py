@@ -1,5 +1,5 @@
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 from datetime import datetime
 from geolib import geohash
@@ -137,6 +137,21 @@ def queryItems(table, keys=[]):
         responses += d_table.query(
             KeyConditionExpression=Key('id').eq(geohash)
         )["Items"]
+    
+    return responses
+
+def fetchAllPlacesFromDatabase(table):
+    '''
+    This function takes a list of geohashes and returns all the places
+    in our database starting with it
+    :table: (str) Name of the datatable to query
+    :keys: ([str]) List of geohashes to look for
+    Returns:
+    :responses: A list of all places found in database
+    '''
+    d_table = dynamodb.Table(table)
+
+    responses = d_table.scan(FilterExpression=Attr("current_popularity").ne("null"))["Items"]
     
     return responses
 

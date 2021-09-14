@@ -43,6 +43,12 @@ functions:
     - httpApi:
         path: /places/nearby
         method: post
+  allPlaces:
+    handler: places.all
+    events:
+    - httpApi:
+        path: /places/all
+        method: get
 
 resources:
   Resources:
