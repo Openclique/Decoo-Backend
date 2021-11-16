@@ -4,6 +4,7 @@ import livepopulartimes
 import requests
 import os
 from geolib import geohash
+from decimal import Decimal
 
 from utils import dynamodb
 
@@ -136,7 +137,7 @@ def fetchPlacesFromApis(geohashes):
         # Then we fetch the APIs to get places around this location
         new_places = get_places_around_location(coords.lat,coords.lon)
 
-        print(new_places)
+        # print(new_places)
 
         # And we add them to the current list of places
         places.extend(new_places)
@@ -152,3 +153,14 @@ def fetchPlacesFromApis(geohashes):
 
     # And we return all places
     return final_places
+
+class number_str(float):
+    def __init__(self, o):
+        self.o = o
+    def __repr__(self):
+        return str(self.o)
+
+def decimal_serializer(o):
+    if isinstance(o, Decimal):
+        return number_str(o)
+    raise TypeError(repr(o) + " is not JSON serializable")

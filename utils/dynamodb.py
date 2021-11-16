@@ -6,9 +6,11 @@ from geolib import geohash
 from decimal import Decimal
 import json
 
-dynamodb = boto3.resource('dynamodb')
-PLACES_TABLE = "places-dev"
-GEOHASHES_TABLE = "geohashes-dev"
+from utils import functions
+
+dynamodb = boto3.resource('dynamodb', region_name='us-west-1')
+PLACES_TABLE = "places-prod"
+GEOHASHES_TABLE = "geohashes-prod"
 
 def isUpToDate(dynamodb_hash):
     '''
@@ -36,17 +38,22 @@ def getGeohashesStatus(geohashes):
 
     ret = {
         "to_update": [],
-        "up_to_date": []
+        "up_to_date": [],
+        "error": True
     }
 
     response, error = batchGetItems(GEOHASHES_TABLE, keys=geohashes)
     
+    if error:
+        return ret
+
     # We extract the informations we found in database 
-    found_hashes = response["Responses"]["geohashes-dev"]
+    found_hashes = response["Responses"][GEOHASHES_TABLE]
 
     # We then create the return object
-    ret["up_to_date"] = [h["geohash"] for h in found_hashes if isUpToDate(h)]
+    # ret["up_to_date"] = [h["geohash"] for h in found_hashes if isUpToDate(h)]
     ret["to_update"] = [h for h in geohashes if h not in ret["up_to_date"]]
+    ret["up_to_date"] = ret["to_update"]
     ret["error"] = error
 
     return ret
@@ -61,12 +68,12 @@ def batchUpdatePlaces(places=[]):
     '''
 
     print("Running batch update")
-    with dynamodb.Table("places-prod").batch_writer() as batch:
+    with dynamodb.Table(PLACES_TABLE).batch_writer() as batch:
 
         # We loop through each place
         for place in places:
 
-            # If the place doesn't have coordinates we simply skip it
+            # If the place doesn't have coordinates or forecast we simply skip it
             if not place['coordinates'] or not place['popular_times']:
                 continue
 
@@ -85,7 +92,44 @@ def batchUpdatePlaces(places=[]):
             # Then we update the places table
             batch.put_item(Item=ddb_data)
 
-    
+    return True
+
+def rememberCurrentQuery(hashes=[]):
+    '''
+    This function takes in a list of hashes that got queried and updates the database
+
+    Args:
+        :hashes: ([str]) list of 5 digits hashes
+    Returns:
+        :bool: True if success, False if error
+    '''
+
+    with dynamodb.Table(GEOHASHES_TABLE).batch_writer() as batch:
+
+        # We loop through each place
+        for hash in hashes:
+            
+            current_hash_item = None
+            ret = dynamodb.Table(GEOHASHES_TABLE).get_item(
+                Key={
+                    "geohash": hash
+                }
+            )
+
+            if "Item" in ret.keys():
+                current_hash_item = ret["Item"]
+                
+            obj = {
+                "geohash": hash,
+                "last_update": 0 if current_hash_item is None else current_hash_item["last_update"],
+                "queried_count": 1 if current_hash_item is None else current_hash_item["queried_count"] + 1
+            }
+
+            ddb_data = json.loads(json.dumps(obj, default=functions.decimal_serializer), parse_float=Decimal)
+
+            # Then we update the places table
+            batch.put_item(Item=ddb_data)
+
     return True
 
 def batchGetItems(table, keys=[], sortKeys=[]):
@@ -117,6 +161,8 @@ def batchGetItems(table, keys=[], sortKeys=[]):
             RequestItems=request,
         )
     except Exception as e:
+        print(f"Error when batch getting items:")
+        print(e)
         error = True
     
     return response, error
@@ -176,7 +222,7 @@ def getGeohashesThatNeedToBeUpdated():
     now = datetime.now().timestamp()
     fifteen_min_before = now - 900
     
-    d_table = dynamodb.Table("geohashes-dev")
+    d_table = dynamodb.Table(GEOHASHES_TABLE)
 
     # We get all five_digits geohashes that have been queried in the last 15 minutes
     hashes_to_update = d_table.scan(

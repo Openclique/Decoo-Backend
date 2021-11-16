@@ -31,25 +31,56 @@ def nearby(event, context):
     # We get a list of all geohashes in the user's radius
     hashes = functions.getGeohashesInRadius(float(body["latitude"]), float(body["longitude"]), RADIUS)
 
+    # We remember that this area has been queried for the updating cron job
+    dynamodb.rememberCurrentQuery(hashes["five_digits"])
+
     # Then we check which geohashes need to be created
     items = dynamodb.getGeohashesStatus(hashes["five_digits"])
 
-    print(items)
-
     # We then fetch informations for all geohashes that need to be updated
-    places = functions.fetchPlacesFromApis(items["to_update"])
+    # places = functions.fetchPlacesFromApis(items["to_update"])
 
     # We query the places from database
-    places += dynamodb.fetchPlacesFromDatabase(items["up_to_date"])
-
-    print(places)
+    places = dynamodb.fetchPlacesFromDatabase(items["up_to_date"])
 
     response = {
         "statusCode": 200,
-        "body": json.dumps(places, parse_float=Decimal)
+        "body": json.dumps(places, default=functions.decimal_serializer)
     }
 
     return response
+
+# def nearby_test(latitude, longitude):
+#     '''
+#     This function is called by the frontend when the user fetches the
+#     places around him.
+#     '''
+
+#     places = []
+
+#     # We get a list of all geohashes in the user's radius
+#     hashes = functions.getGeohashesInRadius(float(latitude), float(longitude), RADIUS)
+
+#     # We remember that this area has been queried for the updating cron job
+#     dynamodb.rememberCurrentQuery(hashes["five_digits"])
+
+#     # Then we check which geohashes need to be created
+#     items = dynamodb.getGeohashesStatus(hashes["five_digits"])
+
+#     # We then fetch informations for all geohashes that need to be updated
+#     places = functions.fetchPlacesFromApis(items["to_update"])
+
+#     # We query the places from database
+#     places += dynamodb.fetchPlacesFromDatabase(items["up_to_date"])
+
+#     response = {
+#         "statusCode": 200,
+#         "body": json.dumps(places, default=functions.decimal_serializer)
+#     }
+
+#     return response
+
+# nearby_test(48.886, 2.207)
 
 def updater(event, context):
     '''
