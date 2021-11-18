@@ -216,17 +216,22 @@ def fetchPlacesFromDatabase(geohashes):
 def getGeohashesThatNeedToBeUpdated():
     '''
     This function scans the dynamodb table and finds all geohashes
-    that have been queried in the last 15 minutes.
+    that have been queried in the last 15 minutes or more than 2 hours ago.
+
+    This way we make sure that in zones where there is a lot of people we are
+    always updated, and in less crowded zones we keep informations relevant enough.
     '''
 
     now = datetime.now().timestamp()
     fifteen_min_before = now - 900
+    two_hours_ago = now - (900 * 8)
     
     d_table = dynamodb.Table(GEOHASHES_TABLE)
 
-    # We get all five_digits geohashes that have been queried in the last 15 minutes
+    # We get all five_digits geohashes that have been queried in the last 15 minutes,
+    # or more than 2 hours ago.
     hashes_to_update = d_table.scan(
-        FilterExpression=Attr('last_query').gte(Decimal(fifteen_min_before)),
+        FilterExpression=Attr('last_query').gte(Decimal(fifteen_min_before)) | Attr('last_query').lte(Decimal(two_hours_ago)),
     )["Items"]
 
     return [h["geohash"] for h in hashes_to_update]
