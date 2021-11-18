@@ -37,9 +37,6 @@ def nearby(event, context):
     # Then we check which geohashes need to be created
     items = dynamodb.getGeohashesStatus(hashes["five_digits"])
 
-    # We then fetch informations for all geohashes that need to be updated
-    # places = functions.fetchPlacesFromApis(items["to_update"])
-
     # We query the places from database
     places = dynamodb.fetchPlacesFromDatabase(items["up_to_date"])
 
@@ -49,38 +46,6 @@ def nearby(event, context):
     }
 
     return response
-
-# def nearby_test(latitude, longitude):
-#     '''
-#     This function is called by the frontend when the user fetches the
-#     places around him.
-#     '''
-
-#     places = []
-
-#     # We get a list of all geohashes in the user's radius
-#     hashes = functions.getGeohashesInRadius(float(latitude), float(longitude), RADIUS)
-
-#     # We remember that this area has been queried for the updating cron job
-#     dynamodb.rememberCurrentQuery(hashes["five_digits"])
-
-#     # Then we check which geohashes need to be created
-#     items = dynamodb.getGeohashesStatus(hashes["five_digits"])
-
-#     # We then fetch informations for all geohashes that need to be updated
-#     places = functions.fetchPlacesFromApis(items["to_update"])
-
-#     # We query the places from database
-#     places += dynamodb.fetchPlacesFromDatabase(items["up_to_date"])
-
-#     response = {
-#         "statusCode": 200,
-#         "body": json.dumps(places, default=functions.decimal_serializer)
-#     }
-
-#     return response
-
-# nearby_test(48.886, 2.207)
 
 def updater(event, context):
     '''
@@ -92,8 +57,18 @@ def updater(event, context):
     # We get a list of all geohashes that need to be updated in the database
     hashes = dynamodb.getGeohashesThatNeedToBeUpdated()
 
+    print(hashes)
+    
     # We then fetch informations for all geohashes that need to be updated
     places = functions.fetchPlacesFromApis(hashes)
+
+    print(f"{len(places)} will be updated")
+
+    # And we save the places in the database
+    dynamodb.batchUpdatePlaces(places)
+
+    # And finally we update dynamodb to remember that these hashes have been updated
+    dynamodb.rememberHashesUpdate(hashes)
 
     response = {
         "statusCode": 200,
@@ -101,3 +76,39 @@ def updater(event, context):
     }
 
     return response
+
+if __name__ == "__main__":
+
+    def nearby_test(latitude=0.0, longitude=0.0):
+        '''
+        This function is called by the frontend when the user fetches the
+        places around him.
+        '''
+
+
+        places = []
+
+        # We get a list of all geohashes in the user's radius
+        hashes = functions.getGeohashesInRadius(float(latitude), float(longitude), RADIUS)
+        print(hashes)
+        # We remember that this area has been queried for the updating cron job
+        dynamodb.rememberCurrentQuery(hashes["five_digits"])
+
+        # Then we check which geohashes need to be created
+        items = dynamodb.getGeohashesStatus(hashes["five_digits"])
+
+        # We then fetch informations for all geohashes that need to be updated
+        # places = functions.fetchPlacesFromApis(items["to_update"])
+
+        # We query the places from database
+        places = dynamodb.fetchPlacesFromDatabase(items["up_to_date"])
+
+        response = {
+            "statusCode": 200,
+            "body": json.dumps(places, default=functions.decimal_serializer)
+        }
+
+        return response
+    
+    print(nearby_test(48.855854, 2.381733))
+    # updater({}, {})

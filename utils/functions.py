@@ -10,7 +10,19 @@ from utils import dynamodb
 
 BASE_URL = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
 TYPE = "bar"
-API_KEY=os.getenv("API_KEY")
+# API_KEY=os.getenv("API_KEY")
+API_KEY="AIzaSyAzdc-cory5ZG-Ds4lW3Y8a7D-UgKFlbC0" # Google Cloud Platform arnauze@gmail.com Openclique project
+
+class number_str(float):
+    def __init__(self, o):
+        self.o = o
+    def __repr__(self):
+        return str(self.o)
+
+def decimal_serializer(o):
+    if isinstance(o, Decimal):
+        return number_str(o)
+    raise TypeError(repr(o) + " is not JSON serializable")
 
 def destinationPoint(lat, lng, brng, dist, index):
     '''
@@ -84,10 +96,10 @@ def get_info_from_google_api(latitude, longitude):
 
     # Building the base url
     url = f"{BASE_URL}location={latitude},{longitude}&radius={2400}&type={TYPE}&key={API_KEY}"
-
+    print(url)
     # Making a request to google places api
     res = requests.get(url).json()
-
+    print(res)
     return res["results"]
 
 def get_places_around_location(latitude, longitude):
@@ -137,8 +149,6 @@ def fetchPlacesFromApis(geohashes):
         # Then we fetch the APIs to get places around this location
         new_places = get_places_around_location(coords.lat,coords.lon)
 
-        # print(new_places)
-
         # And we add them to the current list of places
         places.extend(new_places)
 
@@ -154,13 +164,5 @@ def fetchPlacesFromApis(geohashes):
     # And we return all places
     return final_places
 
-class number_str(float):
-    def __init__(self, o):
-        self.o = o
-    def __repr__(self):
-        return str(self.o)
-
-def decimal_serializer(o):
-    if isinstance(o, Decimal):
-        return number_str(o)
-    raise TypeError(repr(o) + " is not JSON serializable")
+if __name__ == "__main__":
+    fetchPlacesFromApis(["u09w5", "u09t7"])

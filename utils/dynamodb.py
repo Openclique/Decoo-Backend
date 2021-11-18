@@ -51,9 +51,8 @@ def getGeohashesStatus(geohashes):
     found_hashes = response["Responses"][GEOHASHES_TABLE]
 
     # We then create the return object
-    # ret["up_to_date"] = [h["geohash"] for h in found_hashes if isUpToDate(h)]
+    ret["up_to_date"] = [h["geohash"] for h in found_hashes if isUpToDate(h)]
     ret["to_update"] = [h for h in geohashes if h not in ret["up_to_date"]]
-    ret["up_to_date"] = ret["to_update"]
     ret["error"] = error
 
     return ret
@@ -74,7 +73,7 @@ def batchUpdatePlaces(places=[]):
         for place in places:
 
             # If the place doesn't have coordinates or forecast we simply skip it
-            if not place['coordinates'] or not place['popular_times']:
+            if not place['coordinates'] or not place['popular_times'] or not place["current_popularity"]:
                 continue
 
             # We convert lat, lon to 5 and 10 digits geohashes
@@ -122,11 +121,12 @@ def rememberCurrentQuery(hashes=[]):
             obj = {
                 "geohash": hash,
                 "last_update": 0 if current_hash_item is None else current_hash_item["last_update"],
+                "last_query": datetime.now().timestamp(),
                 "queried_count": 1 if current_hash_item is None else current_hash_item["queried_count"] + 1
             }
 
             ddb_data = json.loads(json.dumps(obj, default=functions.decimal_serializer), parse_float=Decimal)
-
+            print(ddb_data)
             # Then we update the places table
             batch.put_item(Item=ddb_data)
 
@@ -226,8 +226,43 @@ def getGeohashesThatNeedToBeUpdated():
 
     # We get all five_digits geohashes that have been queried in the last 15 minutes
     hashes_to_update = d_table.scan(
-        FilterExpression=Key('last_query').GreaterThanEquals(fifteen_min_before),
-        AttributesToGet=["geohash"]
+        FilterExpression=Attr('last_query').gte(Decimal(fifteen_min_before)),
     )["Items"]
 
-    return hashes_to_update
+    return [h["geohash"] for h in hashes_to_update]
+
+def rememberHashesUpdate(hashes):
+    """This function updates the geohashes table to remember that we've
+    updated them
+
+    Args:
+        hashes (list): List of geohashes that got updated
+    """
+    print("in")
+    print(hashes)
+    with dynamodb.Table(GEOHASHES_TABLE).batch_writer() as batch:
+
+        # We loop through each place
+        for hash in hashes:
+            
+            current_hash_item = None
+            ret = dynamodb.Table(GEOHASHES_TABLE).get_item(
+                Key={
+                    "geohash": hash
+                }
+            )
+
+            if "Item" in ret.keys():
+                current_hash_item = ret["Item"]
+
+            obj = {
+                "geohash": hash,
+                "last_update": datetime.now().timestamp(),
+                "last_query": current_hash_item["last_query"],
+                "queried_count": current_hash_item["queried_count"]
+            }
+
+            ddb_data = json.loads(json.dumps(obj, default=functions.decimal_serializer), parse_float=Decimal)
+            print(ddb_data)
+            # Then we update the places table
+            batch.put_item(Item=ddb_data)
