@@ -36,9 +36,9 @@ def nearby(event, context):
 
     # Then we check which geohashes need to be created
     items = dynamodb.getGeohashesStatus(hashes["five_digits"])
-    
+
     # We query the places from database
-    places = dynamodb.fetchPlacesFromDatabase(items["up_to_date"].extend(items["to_update"]))
+    places = dynamodb.fetchPlacesFromDatabase([x for x in items["up_to_date"].extend(items["to_update"])])
 
     response = {
         "statusCode": 200,
@@ -60,6 +60,7 @@ def updater(event, context):
     print(hashes)
     
     # We then fetch informations for all geohashes that need to be updated
+    # TODO: Ne faire le call a google api qu'une fois par jour, et sinon juste populartimes
     places = functions.fetchPlacesFromApis(hashes)
 
     print(f"{len(places)} will be updated")
