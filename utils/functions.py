@@ -10,8 +10,7 @@ from utils import dynamodb
 
 BASE_URL = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
 TYPE = "bar"
-# API_KEY=os.getenv("API_KEY")
-API_KEY="AIzaSyAzdc-cory5ZG-Ds4lW3Y8a7D-UgKFlbC0" # Google Cloud Platform arnauze@gmail.com Openclique project
+API_KEY=os.getenv("API_KEY")
 
 class number_str(float):
     def __init__(self, o):
