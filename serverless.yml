@@ -51,10 +51,10 @@ functions:
         method: get
 
   # These are cron jobs 
-  updater:
-    handler: places.updater # Monitoring of all live centers
-    events:
-      - schedule: rate(10 minutes)
+  # updater:
+  #   handler: places.updater # Monitoring of all live centers
+  #   events:
+  #     - schedule: rate(10 minutes)
 
 
 resources:
