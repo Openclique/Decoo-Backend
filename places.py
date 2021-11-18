@@ -37,8 +37,11 @@ def nearby(event, context):
     # Then we check which geohashes need to be created
     items = dynamodb.getGeohashesStatus(hashes["five_digits"])
 
+    to_fetch = items["up_to_date"]
+    to_fetch.extend(items["to_update"])
+
     # We query the places from database
-    places = dynamodb.fetchPlacesFromDatabase([x for x in items["up_to_date"].extend(items["to_update"])])
+    places = dynamodb.fetchPlacesFromDatabase(to_fetch)
 
     response = {
         "statusCode": 200,
