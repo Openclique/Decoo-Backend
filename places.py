@@ -59,7 +59,7 @@ def updater(event, context):
 
     # We get a list of all geohashes that need to be updated in the database
     ret = dynamodb.getGeohashesThatNeedToBeUpdated()
-    print(ret)
+
     new_hashes = [x[0] for x in ret if x[1]]
     old_hashes = [x[0] for x in ret if not x[1]]
     both_hashes = [x[0] for x in ret]
@@ -75,13 +75,13 @@ def updater(event, context):
     if get_new_points:
         places = functions.fetchPlacesFromApis(both_hashes)
     else:
-        print(new_hashes)
+        places = []
         # If there is any new hashes we still need to build a database for it
         if len(new_hashes) > 0:
-            places = functions.fetchPlacesFromApis(new_hashes)
+            places.extend(functions.fetchPlacesFromApis(new_hashes))
 
         # And we simply update the hashes that already existed
-        places = functions.updatePlacesFromApis(old_hashes)
+        places.extend(functions.updatePlacesFromApis(old_hashes))
 
     print(f"{len(places)} will be updated")
 
