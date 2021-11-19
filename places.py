@@ -58,19 +58,30 @@ def updater(event, context):
     '''
 
     # We get a list of all geohashes that need to be updated in the database
-    hashes = dynamodb.getGeohashesThatNeedToBeUpdated()
+    ret = dynamodb.getGeohashesThatNeedToBeUpdated()
+    print(ret)
+    new_hashes = [x[0] for x in ret if x[1]]
+    old_hashes = [x[0] for x in ret if not x[1]]
+    both_hashes = [x[0] for x in ret]
 
-    print(f"{len(hashes)} will be updated")
+    print(f"{len(new_hashes) + len(old_hashes)} will be updated")
     
     get_new_points = dynamodb.shouldFetchNewPlaces()
 
     print(f"Will get new points: {get_new_points}")
-    # We then fetch informations for all geohashes that need to be updated
-    # TODO: Ne faire le call a google api qu'une fois par jour, et sinon juste populartimes
+
+    # Every 24 hours we try to get new places from external apis to keeep
+    # increasing our database
     if get_new_points:
-        places = functions.fetchPlacesFromApis(hashes)
+        places = functions.fetchPlacesFromApis(both_hashes)
     else:
-        places = functions.updatePlacesFromApis(hashes)
+        print(new_hashes)
+        # If there is any new hashes we still need to build a database for it
+        if len(new_hashes) > 0:
+            places = functions.fetchPlacesFromApis(new_hashes)
+
+        # And we simply update the hashes that already existed
+        places = functions.updatePlacesFromApis(old_hashes)
 
     print(f"{len(places)} will be updated")
 
@@ -78,7 +89,7 @@ def updater(event, context):
     dynamodb.batchUpdatePlaces(places, get_new_points=get_new_points)
 
     # And finally we update dynamodb to remember that these hashes have been updated
-    dynamodb.rememberHashesUpdate(hashes)
+    dynamodb.rememberHashesUpdate(both_hashes)
 
     response = {
         "statusCode": 200,
@@ -120,5 +131,5 @@ if __name__ == "__main__":
 
         return response
     
-    # print(nearby_test(48.855854, 2.381733))
+    # print(nearby_test(40.8558834, 2.3814812))
     updater({}, {})

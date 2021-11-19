@@ -259,7 +259,7 @@ def getGeohashesThatNeedToBeUpdated():
         FilterExpression=Attr('last_query').gte(Decimal(fifteen_min_before)) | (Attr('last_query').lte(Decimal(two_hours_ago)) & Attr('last_update').lte(Decimal(two_hours_ago))),
     )["Items"]
 
-    return [h["geohash"] for h in hashes_to_update]
+    return [(h["geohash"], h["last_update"] == 0) for h in hashes_to_update]
 
 def rememberHashesUpdate(hashes):
     """This function updates the geohashes table to remember that we've
