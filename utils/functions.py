@@ -81,7 +81,7 @@ def getGeohashesInRadius(latitude, longitude, radius):
 
     return track
 
-def get_info_from_google_api(latitude, longitude):
+def get_info_from_google_api(latitude, longitude, type):
     """This function takes in a latitude and a longitude, queris
     the google places API, then returns a list of places around current location.
 
@@ -93,13 +93,22 @@ def get_info_from_google_api(latitude, longitude):
         [{obj}]: Returns a list of places around current user's location
     """
 
-    # Building the base url
-    url = f"{BASE_URL}location={latitude},{longitude}&radius={2400}&type={TYPE}&key={API_KEY}"
-    print(url)
-    # Making a request to google places api
-    res = requests.get(url).json()
-    print(res)
-    return res["results"]
+    types = ["bar", "cafe", "restaurant"]
+    final_ret = []
+    
+    for type in types:
+
+        # Building the base url
+        url = f"{BASE_URL}location={latitude},{longitude}&radius={2400}&type={type}&key={API_KEY}"
+        print(url)
+
+        # Making a request to google places api
+        res = requests.get(url).json()
+        print(f"{len(res['results'])} places found")
+
+        final_ret.extend(res["results"])
+
+    return final_ret
 
 def get_places_around_location(latitude, longitude):
     """This function queries a list of locations around the user's position using its

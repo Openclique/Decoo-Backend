@@ -2,7 +2,7 @@ import json
 from utils import functions, dynamodb
 from decimal import Decimal
 
-RADIUS = 10
+RADIUS = 5
 
 def all(event, context):
     """
