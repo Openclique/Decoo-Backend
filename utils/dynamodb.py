@@ -115,7 +115,6 @@ def batchUpdatePlaces(places=[], get_new_points=False):
         ret = dynamodb.Table(GEOHASHES_TABLE).put_item(
             Item=json.loads(json.dumps({"geohash": "ALL", "last_update": datetime.now().timestamp()}), parse_float=Decimal)
         )
-        print(ret)
 
     return True
 
