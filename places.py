@@ -55,6 +55,8 @@ def updater(event, context):
     This function is called on a cronjob every X minutes.
     It looks at the geohashes that have been queried in the last 15 minutes
     and updates them.
+
+    TODO: Split updating into multiple threads for it not to take 10 minutes
     '''
 
     # We get a list of all geohashes that need to be updated in the database
@@ -64,7 +66,7 @@ def updater(event, context):
     old_hashes = [x[0] for x in ret if not x[1]]
     both_hashes = [x[0] for x in ret]
 
-    print(f"{len(new_hashes) + len(old_hashes)} will be updated")
+    print(f"{len(new_hashes) + len(old_hashes)} hashes will be updated")
     
     get_new_points = dynamodb.shouldFetchNewPlaces()
 
@@ -83,10 +85,15 @@ def updater(event, context):
         # And we simply update the hashes that already existed
         places.extend(functions.updatePlacesFromApis(old_hashes))
 
-    print(f"{len(places)} will be updated")
+    final_places = []
+    for place in places:
+        if place not in final_places:
+            final_places.append(place)
+
+    print(f"{len(final_places)} will be updated")
 
     # And we save the places in the database
-    dynamodb.batchUpdatePlaces(places, get_new_points=get_new_points)
+    dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
 
     # And finally we update dynamodb to remember that these hashes have been updated
     dynamodb.rememberHashesUpdate(both_hashes)
