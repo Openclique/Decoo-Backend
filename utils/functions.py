@@ -128,6 +128,29 @@ def get_places_around_location(latitude, longitude):
     # And we return these informations
     return places
 
+def updatePlacesFromApis(geohashes):
+    """This function queries the places from our database that
+    need to be updated and then updates them using the external
+    APIs.
+
+    Args:
+        geohashes ([hashes]): List of geohashes to update
+    """
+
+    # Query the places to update
+    old_places = dynamodb.fetchPlacesFromDatabase(geohashes)
+    new_places = []
+
+    for place in old_places:
+
+        address = f"({place['name']}) {place['address']}"
+        to_add = livepopulartimes.get_populartimes_by_address(address)
+        new_places.append(to_add)
+    
+    print(new_places)
+
+    return new_places
+
 def fetchPlacesFromApis(geohashes):
     '''
     This function takes in a list of geohashes and queries informations from external APIs

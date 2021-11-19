@@ -11,6 +11,8 @@ from utils import functions
 dynamodb = boto3.resource('dynamodb', region_name='us-west-1')
 PLACES_TABLE = "places-prod"
 GEOHASHES_TABLE = "geohashes-prod"
+TWENTY_FOUR_HOURS = 86400
+
 
 def isUpToDate(dynamodb_hash):
     '''
@@ -25,6 +27,26 @@ def isUpToDate(dynamodb_hash):
         return False
 
     return True
+
+def shouldFetchNewPlaces():
+    """This function returns true if we haven't tried to fetch
+    new places in the last 24 hours.
+    It also update the db to remember that we will now update it
+    """
+
+    info = None
+    ret = dynamodb.Table(GEOHASHES_TABLE).get_item(
+        Key={
+            "geohash": "ALL"
+        }
+    )
+
+    if "Item" in ret.keys():
+        info = ret["Item"]
+    
+    should_fech_new_places = (int(datetime.now().timestamp()) - info["last_update"] > TWENTY_FOUR_HOURS)
+
+    return should_fech_new_places
 
 def getGeohashesStatus(geohashes):
     '''
@@ -57,7 +79,7 @@ def getGeohashesStatus(geohashes):
 
     return ret
 
-def batchUpdatePlaces(places=[]):
+def batchUpdatePlaces(places=[], get_new_points=False):
     '''
     This function takes in a list of places informations and add them into
     our database
@@ -83,13 +105,17 @@ def batchUpdatePlaces(places=[]):
             place["geohash"] = ten_digits_hash
 
             # Then we update the geohashes table
-            print("Place after adding geohash")
-            print(place)
-
             ddb_data = json.loads(json.dumps(place), parse_float=Decimal)
 
             # Then we update the places table
             batch.put_item(Item=ddb_data)
+
+    # We update the db to remember that we queried new points
+    if get_new_points:
+        ret = dynamodb.Table(GEOHASHES_TABLE).put_item(
+            Item=json.loads(json.dumps({"geohash": "ALL", "last_update": datetime.now().timestamp()}), parse_float=Decimal)
+        )
+        print(ret)
 
     return True
 
@@ -231,7 +257,7 @@ def getGeohashesThatNeedToBeUpdated():
     # We get all five_digits geohashes that have been queried in the last 15 minutes,
     # or more than 2 hours ago.
     hashes_to_update = d_table.scan(
-        FilterExpression=Attr('last_query').gte(Decimal(fifteen_min_before)) | Attr('last_query').lte(Decimal(two_hours_ago)),
+        FilterExpression=Attr('last_query').gte(Decimal(fifteen_min_before)) | (Attr('last_query').lte(Decimal(two_hours_ago)) & Attr('last_update').lte(Decimal(two_hours_ago))),
     )["Items"]
 
     return [h["geohash"] for h in hashes_to_update]
