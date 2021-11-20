@@ -213,10 +213,8 @@ def queryItems(table, keys=[]):
 
 def fetchAllPlacesFromDatabase(table):
     '''
-    This function takes a list of geohashes and returns all the places
-    in our database starting with it
+    This function fetches all places from our database
     :table: (str) Name of the datatable to query
-    :keys: ([str]) List of geohashes to look for
     Returns:
     :responses: A list of all places found in database
     '''

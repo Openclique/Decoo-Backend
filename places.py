@@ -4,7 +4,6 @@ from decimal import Decimal
 import requests
 
 RADIUS = 5
-API_KEY="AIzaSyAzdc-cory5ZG-Ds4lW3Y8a7D-UgKFlbC0" # Google Cloud Platform arnauze@gmail.com Openclique project
 
 def all(event, context):
     """
