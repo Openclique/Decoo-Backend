@@ -1,8 +1,10 @@
 import json
 from utils import functions, dynamodb
 from decimal import Decimal
+import requests
 
 RADIUS = 5
+API_KEY="AIzaSyAzdc-cory5ZG-Ds4lW3Y8a7D-UgKFlbC0" # Google Cloud Platform arnauze@gmail.com Openclique project
 
 def all(event, context):
     """
@@ -139,4 +141,17 @@ if __name__ == "__main__":
         return response
     
     # print(nearby_test(40.8558834, 2.3814812))
-    updater({}, {})
+    # updater({}, {})
+    # res = functions.get_place_info_from_google("ChIJieGyj-HHwoARK-hwrwbi76E")
+    # print(res.keys())
+    # print(res["international_phone_number"])
+    # print(res["website"])
+    # print(res["price_level"])
+    # print(res["photos"])
+    # print(res["reviews"])
+
+    # functions.getPhotosFromGoogleApi(res["photos"])
+
+    places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
+    places = functions.addExtraInfoToPlaces(places)
+    dynamodb.batchUpdatePlaces(places)

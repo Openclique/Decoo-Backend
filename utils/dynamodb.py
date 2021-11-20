@@ -105,7 +105,7 @@ def batchUpdatePlaces(places=[], get_new_points=False):
             place["geohash"] = ten_digits_hash
 
             # Then we update the geohashes table
-            ddb_data = json.loads(json.dumps(place), parse_float=Decimal)
+            ddb_data = json.loads(json.dumps(place, default=functions.decimal_serializer), parse_float=Decimal)
 
             # Then we update the places table
             batch.put_item(Item=ddb_data)
@@ -222,9 +222,14 @@ def fetchAllPlacesFromDatabase(table):
     '''
     d_table = dynamodb.Table(table)
 
-    responses = d_table.scan(FilterExpression=Attr("current_popularity").ne("null"))["Items"]
+    ret = d_table.scan(Limit=100)
+    places = ret["Items"]
+
+    while 'LastEvaluatedKey' in ret:
+        ret = d_table.scan(ExclusiveStartKey=ret['LastEvaluatedKey'])
+        places.extend(ret['Items'])
     
-    return responses
+    return places
 
 def fetchPlacesFromDatabase(geohashes):
     '''

@@ -8,9 +8,11 @@ from decimal import Decimal
 
 from utils import dynamodb
 
-BASE_URL = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
+NEARBY_URL = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
+DETAIL_URL = f"https://maps.googleapis.com/maps/api/place/details/json?"
 TYPE = "bar"
-API_KEY=os.getenv("API_KEY")
+# API_KEY=os.getenv("API_KEY")
+API_KEY="AIzaSyAzdc-cory5ZG-Ds4lW3Y8a7D-UgKFlbC0" # Google Cloud Platform arnauze@gmail.com Openclique project
 
 class number_str(float):
     def __init__(self, o):
@@ -81,6 +83,23 @@ def getGeohashesInRadius(latitude, longitude, radius):
 
     return track
 
+def get_place_info_from_google(place_id):
+    """This function calls the place detail endpoint from
+    google places API.
+
+    Args:
+        place_id (string): Id of the place to query
+    """
+
+    url = f"{DETAIL_URL}place_id={place_id}&key={API_KEY}"
+    print(url)
+
+    # Making a request to google places api
+    res = requests.get(url).json()
+    # print(res)
+
+    return res["result"]
+
 def get_info_from_google_api(latitude, longitude):
     """This function takes in a latitude and a longitude, queris
     the google places API, then returns a list of places around current location.
@@ -99,7 +118,7 @@ def get_info_from_google_api(latitude, longitude):
     for type in types:
 
         # Building the base url
-        url = f"{BASE_URL}location={latitude},{longitude}&radius={2400}&type={type}&key={API_KEY}"
+        url = f"{NEARBY_URL}location={latitude},{longitude}&radius={2400}&type={type}&key={API_KEY}"
         print(url)
 
         # Making a request to google places api
@@ -160,6 +179,50 @@ def updatePlacesFromApis(geohashes):
 
     return new_places
 
+def getPhotosFromGoogleApi(photos):
+    """This function loops through the photos element returned
+    by google place detail api, and create images from there
+
+    Args:
+        photos (list of photos): List of photos elements
+    """
+    index = 1
+    for photo in photos:
+        ref = photo["photo_reference"]
+        url = f"https://maps.googleapis.com/maps/api/place/photo?photo_reference={ref}&key={API_KEY}"
+
+        res_d = requests.get(url)
+
+        with open(f"image_{index}.jpeg", "wb") as f:
+            for chunk in res_d:
+                if chunk:
+                    f.write(chunk)
+
+        index += 1
+
+def addExtraInfoToPlaces(places):
+    """This function adds the website, phone number, and other informations
+    to the place information.
+
+    Args:
+        places ([dict]): List of places that we need to complete
+    """
+
+    new_places = []
+    print(f"Will update {len(places)}")
+    for place in places:
+        ret = get_place_info_from_google(place["place_id"])
+
+        place["phone_number"] = ret["international_phone_number"] if "international_phone_number" in ret else ret["phone_number"] if "phone_number" in ret else ""
+        place["website"] = ret["website"] if "website" in ret else ""
+        place["price_level"] = ret["price_level"] if "price_level" in ret else ""
+        place["photos"] = ret["photos"] if "photos" in ret else []
+        place["reviews"] = ret["reviews"] if "reviews" in ret else []
+
+        new_places.append(place)
+    
+    return new_places
+
 def fetchPlacesFromApis(geohashes):
     '''
     This function takes in a list of geohashes and queries informations from external APIs
@@ -189,8 +252,11 @@ def fetchPlacesFromApis(geohashes):
         if place not in final_places:
             final_places.append(place)
 
+    final_places = addExtraInfoToPlaces(final_places)
+
     # And we return all places
     return final_places
 
 if __name__ == "__main__":
-    fetchPlacesFromApis(["u09w5", "u09t7"])
+    # fetchPlacesFromApis(["u09w5", "u09t7"])
+    get_place_info_from_google("ChIJieGyj-HHwoARK-hwrwbi76E")
