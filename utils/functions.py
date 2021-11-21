@@ -306,7 +306,7 @@ def buildPlaceInfoFromBestTime(place, update=False):
                 'quiet_hours': x["quiet_hours"],
                 'peak_hours': x["peak_hours"],
                 'surge_hours': x["surge_hours"],
-            } for x in place["analysis"]
+            } for x in forecast_info["analysis"]
         ]
         place["popular_times"] = []
         place["time_spent"] = forecast_info["venu_info"]["venue_dwell_time_avg"]
