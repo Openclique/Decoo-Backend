@@ -190,7 +190,7 @@ def updatePlacesFromApis(geohashes):
 
         # If we couldn't find the proper informations for this place, we try to get it from best times
         if not to_add['coordinates'] or not to_add['popular_times'] or not to_add["current_popularity"]:
-            to_add, success = buildPlaceInfoFromBestTime(to_add)
+            to_add, success = buildPlaceInfoFromBestTime(to_add, update=True)
         else:
             success = True
 
@@ -279,7 +279,7 @@ def fetchPlacesFromApis(geohashes):
     # And we return all places
     return final_places
 
-def buildPlaceInfoFromBestTime(place):
+def buildPlaceInfoFromBestTime(place, update=False):
     """[summary]
 
     Args:
@@ -289,26 +289,31 @@ def buildPlaceInfoFromBestTime(place):
     # We get the forecast and live info for current place
     live_info = getLiveFromBestTimes(place)
 
-    print(live_info)
     if "analysis" not in live_info or not live_info["analysis"]["venue_live_busyness_available"]:
         return {}, False
 
-    forecast_info = getForecastFromBestTimes(place)
+    # If we are fetching this point for the first time, we queyr all informations
+    if not update:
+        forecast_info = getForecastFromBestTimes(place)
+        
+        # Then we create our informations using it
+        place["current_popularity"] = live_info["analysis"]["venue_live_busyness"]
+        place["populartimes"] = [
+            {
+                "name": x['day_info']['day_text'],
+                "data": x['day_raw'],
+                'busy_hours': x["busy_hours"],
+                'quiet_hours': x["quiet_hours"],
+                'peak_hours': x["peak_hours"],
+                'surge_hours': x["surge_hours"],
+            } for x in place["analysis"]
+        ]
+        place["popular_times"] = []
+        place["time_spent"] = forecast_info["venu_info"]["venue_dwell_time_avg"]
     
-    # Then we create our informations using it
-    place["current_popularity"] = live_info["analysis"]["venue_live_busyness"]
-    place["populartimes"] = [
-        {
-            "name": x['day_info']['day_text'],
-            "data": x['day_raw'],
-            'busy_hours': x["busy_hours"],
-            'quiet_hours': x["quiet_hours"],
-            'peak_hours': x["peak_hours"],
-            'surge_hours': x["surge_hours"],
-        } for x in place["analysis"]
-    ]
-    place["popular_times"] = []
-    place["time_spent"] = forecast_info["venu_info"]["venue_dwell_time_avg"]
+    # Otherwise we simply query current live traffic
+    else:
+        place["current_popularity"] = live_info["analysis"]["venue_live_busyness"]
 
     return place, True
 
