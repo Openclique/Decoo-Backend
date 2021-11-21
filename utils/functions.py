@@ -11,7 +11,9 @@ from utils import dynamodb
 NEARBY_URL = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json?"
 DETAIL_URL = f"https://maps.googleapis.com/maps/api/place/details/json?"
 TYPE = "bar"
-API_KEY=os.getenv("API_KEY")
+RADIUS=5000
+GOOGLE_API_KEY=os.getenv("GOOGLE_API_KEY")
+BEST_TIMES_API_KEY=os.getenv("BEST_TIMES_API_KEY")
 
 class number_str(float):
     def __init__(self, o):
@@ -90,7 +92,7 @@ def get_place_info_from_google(place_id):
         place_id (string): Id of the place to query
     """
 
-    url = f"{DETAIL_URL}place_id={place_id}&key={API_KEY}"
+    url = f"{DETAIL_URL}place_id={place_id}&key={GOOGLE_API_KEY}"
     print(url)
 
     # Making a request to google places api
@@ -117,7 +119,7 @@ def get_info_from_google_api(latitude, longitude):
     for type in types:
 
         # Building the base url
-        url = f"{NEARBY_URL}location={latitude},{longitude}&radius={2400}&type={type}&key={API_KEY}"
+        url = f"{NEARBY_URL}location={latitude},{longitude}&radius={2400}&type={type}&key={GOOGLE_API_KEY}"
         print(url)
 
         # Making a request to google places api
@@ -150,7 +152,19 @@ def get_places_around_location(latitude, longitude):
     for place in google_search:
         address = f"({place['name']}) {place['vicinity']}"
         to_add = livepopulartimes.get_populartimes_by_address(address)
-        places.append(to_add)
+        success = False
+
+        # If we couldn't find the proper informations for this place, we try to get it from best times
+        if not to_add['coordinates'] or not to_add['popular_times'] or not to_add["current_popularity"]:
+            print("\nCouldn't find informations on google, trying best times")
+            to_add, success = buildPlaceInfoFromBestTime(to_add)
+            print("Place after best time info:")
+            print(to_add)
+        else:
+            success = True
+
+        if success:
+            places.append(to_add)
 
     # And we return these informations
     return places
@@ -170,10 +184,19 @@ def updatePlacesFromApis(geohashes):
 
     for place in old_places:
 
+        success = False
         address = f"({place['name']}) {place['address']}"
         to_add = livepopulartimes.get_populartimes_by_address(address)
-        new_places.append(to_add)
-    
+
+        # If we couldn't find the proper informations for this place, we try to get it from best times
+        if not to_add['coordinates'] or not to_add['popular_times'] or not to_add["current_popularity"]:
+            to_add, success = buildPlaceInfoFromBestTime(to_add)
+        else:
+            success = True
+
+        if success:
+            new_places.append(to_add)
+        
     print(new_places)
 
     return new_places
@@ -188,7 +211,7 @@ def getPhotosFromGoogleApi(photos):
     index = 1
     for photo in photos:
         ref = photo["photo_reference"]
-        url = f"https://maps.googleapis.com/maps/api/place/photo?photo_reference={ref}&key={API_KEY}"
+        url = f"https://maps.googleapis.com/maps/api/place/photo?photo_reference={ref}&key={GOOGLE_API_KEY}"
 
         res_d = requests.get(url)
 
@@ -256,6 +279,172 @@ def fetchPlacesFromApis(geohashes):
     # And we return all places
     return final_places
 
+def buildPlaceInfoFromBestTime(place):
+    """[summary]
+
+    Args:
+        place ([type]): [description]
+    """
+
+    # We get the forecast and live info for current place
+    live_info = getLiveFromBestTimes(place)
+
+    print(live_info)
+    if "analysis" not in live_info or not live_info["analysis"]["venue_live_busyness_available"]:
+        return {}, False
+
+    forecast_info = getForecastFromBestTimes(place)
+    
+    # Then we create our informations using it
+    place["current_popularity"] = live_info["analysis"]["venue_live_busyness"]
+    place["populartimes"] = [
+        {
+            "name": x['day_info']['day_text'],
+            "data": x['day_raw'],
+            'busy_hours': x["busy_hours"],
+            'quiet_hours': x["quiet_hours"],
+            'peak_hours': x["peak_hours"],
+            'surge_hours': x["surge_hours"],
+        } for x in place["analysis"]
+    ]
+    place["popular_times"] = []
+    place["time_spent"] = forecast_info["venu_info"]["venue_dwell_time_avg"]
+
+    return place, True
+
+def getForecastFromBestTimes(place):
+    """[summary]
+    TODO: Use this endpoint on each place to get extra informations about a place
+
+    Args:
+        place ([type]): [description]
+    """
+    url = "https://besttime.app/api/v1/forecasts"
+
+    params = {
+        'api_key_private': BEST_TIMES_API_KEY,
+        'venue_name': place["name"],
+        'venue_address': place["address"]
+    }
+
+    ret = requests.request("POST", url, params=params).json()
+
+    # venu_info
+    # {
+    #     'venue_id': 'ven_3045523979346c3373336852636b3547755f5f495664774a496843',
+    #     'venue_name': 'Franprix',
+    #     'venue_address': '6 Résidence Parc Montaigne 78330 Fontenay-le-Fleury France',
+    #     'venue_timezone': 'Europe/Paris',
+    #     'venue_dwell_time_min': 20,
+    #     'venue_dwell_time_max': 20,
+    #     'venue_dwell_time_avg': 20,
+    #     'venue_type': 'SUPERMARKET',
+    #     'venue_types': ['supermarket', 'fast_food_restaurant', 'grocery_store', 'organic_restaurant'],
+    #     'venue_lat': 48.814026999999996,
+    #     'venue_lon': 2.0523918
+    # }
+
+    # analysis
+    # {
+    #     'day_info': {
+    #         'day_int': 0,
+    #         'day_text': 'Monday',
+    #         'venue_open': 0,
+    #         'venue_closed': 0,
+    #         'day_rank_mean': 7,
+    #         'day_rank_max': 7,
+    #         'day_mean': 16,
+    #         'day_max': 39
+    #     },
+    #     'busy_hours': [19, 20],
+    #     'quiet_hours': [6, 7, 8, 9, 10, 0, 1, 2, 3, 4, 5],
+    #     'peak_hours': [{'peak_start': 12, 'peak_max': 19, 'peak_end': 22, 'peak_intensity': 2, 'peak_delta_mean_week': 17}],
+    #     'surge_hours': {'most_people_come': 12, 'most_people_leave': 22},
+    #     'hour_analysis': [{'hour': 6, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 7, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 8, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 9, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 10, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 11, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 12, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 13, 'intensity_txt': 'Average', 'intensity_nr': 0}, {'hour': 14, 'intensity_txt': 'Average', 'intensity_nr': 0}, {'hour': 15, 'intensity_txt': 'Average', 'intensity_nr': 0}, {'hour': 16, 'intensity_txt': 'Average', 'intensity_nr': 0}, {'hour': 17, 'intensity_txt': 'Average', 'intensity_nr': 0}, {'hour': 18, 'intensity_txt': 'Average', 'intensity_nr': 0}, {'hour': 19, 'intensity_txt': 'Above average', 'intensity_nr': 1}, {'hour': 20, 'intensity_txt': 'Above average', 'intensity_nr': 1}, {'hour': 21, 'intensity_txt': 'Average', 'intensity_nr': 0}, {'hour': 22, 'intensity_txt': 'Average', 'intensity_nr': 0}, {'hour': 23, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 0, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 1, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 2, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 3, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 4, 'intensity_txt': 'Low', 'intensity_nr': -2}, {'hour': 5, 'intensity_txt': 'Low', 'intensity_nr': -2}],
+    #     'day_raw': [0, 0, 0, 5, 5, 10, 20, 25, 30, 35, 35, 35, 35, 40, 40, 30, 20, 10, 5, 0, 0, 0, 0, 0]
+    # }
+
+    return ret
+
+def getLiveFromBestTimes(place):
+    """[summary]
+
+    Args:
+        place ([type]): [description]
+    """
+    url = "https://besttime.app/api/v1/forecasts/live"
+
+    params = {
+        'api_key_private': BEST_TIMES_API_KEY,
+        'venue_name': place["name"],
+        'venue_address': place["address"]
+    }
+
+    print(params)
+
+    ret = requests.request("POST", url, params=params).json()
+
+    # {
+    #     'status': 'OK',
+    #     'analysis': {
+    #         'venue_forecasted_busyness': 90,
+    #         'venue_forecasted_busyness_available': True,
+    #         'venue_live_busyness': 75,
+    #         'venue_live_busyness_available': True,
+    #         'venue_live_forecasted_delta': -15,
+    #         'hour_start': 19,
+    #         'hour_start_12': '7PM',
+    #         'hour_end': 20,
+    #         'hour_end_12': '8PM'
+    #     },
+    #     'venue_info': {
+    #         'venue_current_gmttime': 'Saturday 2021-11-20 06:26PM',
+    #         'venue_current_localtime': 'Saturday 2021-11-20 07:26PM',
+    #         'venue_id': 'ven_496b5f312d37394568697752636b35474f74456e3336714a496843',
+    #         'venue_name': 'UGC',
+    #         'venue_address': '1 Av. de la Source de la Bièvre 78180 Montigny-le-Bretonneux France',
+    #         'venue_timezone': 'Europe/Paris',
+    #         'venue_open': 'Open',
+    #         'venue_dwell_time_min': 0,
+    #         'venue_dwell_time_max': 0,
+    #         'venue_dwell_time_avg': 0,
+    #         'venue_lat': 48.784072699999996,
+    #         'venue_lon': 2.0409398
+    #     }
+    # }
+
+    return ret
+
+def getNearbyFromBestTime(lat, lng):
+    """[summary]
+
+    Args:
+        place ([type]): [description]
+    """
+    url = "https://besttime.app/api/v1/venues/filter"
+    params = {
+        'api_key_private': BEST_TIMES_API_KEY,
+        # 'busy_min': 50,
+        # 'busy_max': 100,
+        # 'hour_min': 18,
+        # 'hour_max': 23,
+        # 'busy_conf':'any',
+        'types': ['BAR','CAFE','RESTAURANT', 'CLUBS'],
+        'lat': lat,
+        'lng': lng,
+        'radius': 2000,
+        # 'order_by': ['day_rank_max','reviews'],
+        # 'order': ['desc','desc'],
+        'foot_traffic': 'both',
+        # 'limit': 20,
+        # 'page': 0
+    }
+    response = requests.request("GET", url, params=params)
+    print(response.json())
+
 if __name__ == "__main__":
-    # fetchPlacesFromApis(["u09w5", "u09t7"])
-    get_place_info_from_google("ChIJieGyj-HHwoARK-hwrwbi76E")
+    places = fetchPlacesFromApis(["u09mw"])
+    # for place in places:
+    #     getForecastFromBestTimes(place)
+    #     getLiveFromBestTimes(place)
+    # get_place_info_from_google("ChIJieGyj-HHwoARK-hwrwbi76E")

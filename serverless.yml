@@ -34,7 +34,8 @@ provider:
           - dynamodb:BatchWriteItem
         Resource: "*"
   environment:
-    API_KEY: ${param:google_api_key}
+    GOOGLE_API_KEY: ${param:google_api_key}
+    BEST_TIMES_API_KEY: ${param:best_times_api_key}
 
 functions:
   nearbyPlaces:

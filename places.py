@@ -151,6 +151,17 @@ if __name__ == "__main__":
 
     # functions.getPhotosFromGoogleApi(res["photos"])
 
-    places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
-    places = functions.addExtraInfoToPlaces(places)
-    dynamodb.batchUpdatePlaces(places)
+    # places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
+    # places = functions.addExtraInfoToPlaces(places)
+    # dynamodb.batchUpdatePlaces(places)
+
+    # places = dynamodb.fetchPlacesFromDatabase(["u09mw"])
+    # # print(places)
+    # for place in places:
+    #     place_forecast = functions.getForecastFromBestTimes(place)
+    #     place_live = functions.getLiveFromBestTimes(place)
+    #     print(place_live)
+
+    # functions.getNearbyFromBestTime(51.5121172,-0.126173)
+
+    places = functions.fetchPlacesFromApis(["9q5cs"])
