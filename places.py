@@ -75,15 +75,15 @@ def updater(event, context):
     # Every 24 hours we try to get new places from external apis to keeep
     # increasing our database
     if get_new_points:
-        places = functions.fetchPlacesFromApis(both_hashes)
+        functions.fetchPlacesFromApis(both_hashes, get_new_points)
     else:
         places = []
         # If there is any new hashes we still need to build a database for it
         if len(new_hashes) > 0:
-            places.extend(functions.fetchPlacesFromApis(new_hashes))
+            functions.fetchPlacesFromApis(new_hashes, get_new_points)
 
         # And we simply update the hashes that already existed
-        places.extend(functions.updatePlacesFromApis(old_hashes))
+        places = functions.updatePlacesFromApis(old_hashes)
 
     # We remove duplicate places
     final_places = []
@@ -95,9 +95,6 @@ def updater(event, context):
 
     # And we save the places in the database
     dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
-
-    # And finally we update dynamodb to remember that these hashes have been updated
-    dynamodb.rememberHashesUpdate(both_hashes)
 
     response = {
         "statusCode": 200,

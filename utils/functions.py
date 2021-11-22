@@ -157,9 +157,9 @@ def get_places_around_location(latitude, longitude):
         # If we couldn't find the proper informations for this place, we try to get it from best times
         if not to_add['coordinates'] or not to_add['popular_times'] or not to_add["current_popularity"]:
             print("\nCouldn't find informations on google, trying best times")
-            to_add, success = buildPlaceInfoFromBestTime(to_add)
-            print("Place after best time info:")
-            print(to_add)
+            # to_add, success = buildPlaceInfoFromBestTime(to_add)
+            # print("Place after best time info:")
+            # print(to_add)
         else:
             success = True
 
@@ -246,7 +246,7 @@ def addExtraInfoToPlaces(places):
     
     return new_places
 
-def fetchPlacesFromApis(geohashes):
+def fetchPlacesFromApis(geohashes, get_new_points):
     '''
     This function takes in a list of geohashes and queries informations from external APIs
     to put in our database
@@ -255,8 +255,6 @@ def fetchPlacesFromApis(geohashes):
     :places: ([str]) A list of places informations
     '''
 
-    places = []
-
     # We loop through all geohashes
     for geo in geohashes:
 
@@ -264,21 +262,24 @@ def fetchPlacesFromApis(geohashes):
         coords = geohash.decode(geo)
 
         # Then we fetch the APIs to get places around this location
-        new_places = get_places_around_location(coords.lat,coords.lon)
+        places = get_places_around_location(coords.lat,coords.lon)
 
-        # And we add them to the current list of places
-        places.extend(new_places)
+        # Removing duplicates
+        final_places = []
+        for place in places:
+            if place not in final_places:
+                final_places.append(place)
+        
+        # Add some infos
+        final_places = addExtraInfoToPlaces(final_places)
 
-    # After that we loop through all the places we queried, and remove all duplicates
-    final_places = []
-    for place in places:
-        if place not in final_places:
-            final_places.append(place)
+        # Then update places
+        dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
 
-    final_places = addExtraInfoToPlaces(final_places)
+        # And finally we update dynamodb to remember that this hash has been updated
+        dynamodb.rememberHashesUpdate([geo])
 
-    # And we return all places
-    return final_places
+    return True
 
 def buildPlaceInfoFromBestTime(place, update=False):
     """[summary]

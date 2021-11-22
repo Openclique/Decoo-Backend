@@ -89,7 +89,7 @@ def batchUpdatePlaces(places=[], get_new_points=False):
     :bool: True if success, False if error
     '''
 
-    print("Running batch update")
+    print(f"Running batch update on {len(places)} places")
     with dynamodb.Table(PLACES_TABLE).batch_writer() as batch:
 
         # We loop through each place
