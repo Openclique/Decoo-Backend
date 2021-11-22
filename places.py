@@ -1,7 +1,6 @@
 import json
 from utils import functions, dynamodb
 from decimal import Decimal
-import requests
 
 RADIUS = 5 # km
 
