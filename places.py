@@ -96,6 +96,9 @@ def updater(event, context):
     # And we save the places in the database
     dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
 
+    # And finally we update dynamodb to remember that these hashes have been updated
+    dynamodb.rememberHashesUpdate(old_hashes)
+
     response = {
         "statusCode": 200,
         "body": json.dumps({"message": "Success"})
