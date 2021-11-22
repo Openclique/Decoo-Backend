@@ -34,19 +34,20 @@ def shouldFetchNewPlaces():
     It also update the db to remember that we will now update it
     """
 
-    info = None
-    ret = dynamodb.Table(GEOHASHES_TABLE).get_item(
-        Key={
-            "geohash": "ALL"
-        }
-    )
+    # info = None
+    # ret = dynamodb.Table(GEOHASHES_TABLE).get_item(
+    #     Key={
+    #         "geohash": "ALL"
+    #     }
+    # )
 
-    if "Item" in ret.keys():
-        info = ret["Item"]
+    # if "Item" in ret.keys():
+    #     info = ret["Item"]
     
-    should_fech_new_places = (int(datetime.now().timestamp()) - info["last_update"] > TWENTY_FOUR_HOURS)
+    # should_fech_new_places = (int(datetime.now().timestamp()) - info["last_update"] > TWENTY_FOUR_HOURS)
 
-    return should_fech_new_places
+    # return should_fech_new_places
+    return False
 
 def getGeohashesStatus(geohashes):
     '''
