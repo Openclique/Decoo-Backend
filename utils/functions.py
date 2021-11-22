@@ -190,7 +190,8 @@ def updatePlacesFromApis(geohashes):
 
         # If we couldn't find the proper informations for this place, we try to get it from best times
         if not to_add['coordinates'] or not to_add['popular_times'] or not to_add["current_popularity"]:
-            place, success = buildPlaceInfoFromBestTime(place, update=True)
+            print("Coudln't get info from popular times")
+            # place, success = buildPlaceInfoFromBestTime(place, update=True)
         else:
             place["current_popularity"] = to_add["current_popularity"]
             success = True
