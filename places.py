@@ -3,7 +3,7 @@ from utils import functions, dynamodb
 from decimal import Decimal
 import requests
 
-RADIUS = 5
+RADIUS = 5 # km
 
 def all(event, context):
     """
@@ -86,6 +86,7 @@ def updater(event, context):
         # And we simply update the hashes that already existed
         places.extend(functions.updatePlacesFromApis(old_hashes))
 
+    # We remove duplicate places
     final_places = []
     for place in places:
         if place not in final_places:
@@ -149,12 +150,16 @@ if __name__ == "__main__":
     # print(res["photos"])
     # print(res["reviews"])
 
+    # GETTING PHOTOS FROM GOOGLE API
+    # TODO: HOW TO SAVE THE IMAGES ?
     # functions.getPhotosFromGoogleApi(res["photos"])
 
+    # ADD EXTRA INFO TO ALL CURRENT PLACES
     # places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
     # places = functions.addExtraInfoToPlaces(places)
     # dynamodb.batchUpdatePlaces(places)
 
+    # TEST BEST TIME API IN A GEOHASH LIST
     # places = dynamodb.fetchPlacesFromDatabase(["u09mw"])
     # # print(places)
     # for place in places:
@@ -162,6 +167,19 @@ if __name__ == "__main__":
     #     place_live = functions.getLiveFromBestTimes(place)
     #     print(place_live)
 
+    # TEST BEST TIME NEARBY API
     # functions.getNearbyFromBestTime(51.5121172,-0.126173)
 
-    places = functions.fetchPlacesFromApis(["9q5cs"])
+    # TEST GETTING PLACES FROM EXTERNET API FOR GEOHASH LIST
+    hashes = functions.getGeohashesInRadius(34.0395553,-118.2633982,5)
+    print(hashes["five_digits"])
+    places = functions.fetchPlacesFromApis(hashes["five_digits"])
+    final_places = []
+    for place in places:
+        if place not in final_places:
+            final_places.append(place)
+
+    print(f"{len(final_places)} will be updated")
+
+    # And we save the places in the database
+    dynamodb.batchUpdatePlaces(final_places)

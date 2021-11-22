@@ -113,7 +113,7 @@ def get_info_from_google_api(latitude, longitude):
         [{obj}]: Returns a list of places around current user's location
     """
 
-    types = ["bar", "cafe", "restaurant"]
+    types = ["bar", "cafe", "night_club"]
     final_ret = []
 
     for type in types:
