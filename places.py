@@ -87,10 +87,6 @@ def updater(event, context):
         # And we simply update the hashes that already existed
         functions.updatePlacesFromApis(old_hashes, get_new_points)
 
-    # And finally we update dynamodb to remember that these hashes have been updated
-    # TODO: Move this in updatePlaceFromApis and find way to update as we go
-    dynamodb.rememberHashesUpdate(old_hashes)
-
     response = {
         "statusCode": 200,
         "body": json.dumps({"message": "Success"})

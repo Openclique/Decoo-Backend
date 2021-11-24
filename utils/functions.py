@@ -197,9 +197,14 @@ def updatePlacesFromApis(geohashes, get_new_points):
     # Query the places to update
     old_places = dynamodb.fetchPlacesFromDatabase(geohashes)
     new_places = []
+    hashes_updated = []
     index = 0
 
     for place in old_places:
+
+        if place['id'] not in hashes_updated:
+            hashes_updated.append(place['id'])
+
         index += 1
 
         success = False
@@ -226,6 +231,9 @@ def updatePlacesFromApis(geohashes, get_new_points):
                     final_places.append(place)
             dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
 
+            # And finally we update dynamodb to remember that these hashes have been updated
+            dynamodb.rememberHashesUpdate(hashes_updated)
+
             new_places = []
     
     # We remove duplicate places
@@ -235,6 +243,9 @@ def updatePlacesFromApis(geohashes, get_new_points):
             final_places.append(place)
 
     dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
+
+    # And finally we update dynamodb to remember that these hashes have been updated
+    dynamodb.rememberHashesUpdate(hashes_updated)
 
     return True
 
