@@ -85,20 +85,10 @@ def updater(event, context):
             functions.fetchPlacesFromApis(new_hashes, get_new_points)
 
         # And we simply update the hashes that already existed
-        places = functions.updatePlacesFromApis(old_hashes)
-
-    # We remove duplicate places
-    final_places = []
-    for place in places:
-        if place not in final_places:
-            final_places.append(place)
-
-    print(f"{len(final_places)} will be updated")
-
-    # And we save the places in the database
-    dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
+        functions.updatePlacesFromApis(old_hashes, get_new_points)
 
     # And finally we update dynamodb to remember that these hashes have been updated
+    # TODO: Move this in updatePlaceFromApis and find way to update as we go
     dynamodb.rememberHashesUpdate(old_hashes)
 
     response = {

@@ -185,7 +185,7 @@ def get_places_around_location(latitude, longitude):
     # And we return these informations
     return places
 
-def updatePlacesFromApis(geohashes):
+def updatePlacesFromApis(geohashes, get_new_points):
     """This function queries the places from our database that
     need to be updated and then updates them using the external
     APIs.
@@ -197,8 +197,10 @@ def updatePlacesFromApis(geohashes):
     # Query the places to update
     old_places = dynamodb.fetchPlacesFromDatabase(geohashes)
     new_places = []
+    index = 0
 
     for place in old_places:
+        index += 1
 
         success = False
         address = f"({place['name']}) {place['address']}"
@@ -215,9 +217,26 @@ def updatePlacesFromApis(geohashes):
         if success:
             new_places.append(place)
         
-    print(new_places)
+        if index % 50 == 0:
 
-    return new_places
+            # We remove duplicate places
+            final_places = []
+            for place in new_places:
+                if place not in final_places:
+                    final_places.append(place)
+            dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
+
+            new_places = []
+    
+    # We remove duplicate places
+    final_places = []
+    for place in new_places:
+        if place not in final_places:
+            final_places.append(place)
+
+    dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
+
+    return True
 
 def getPhotosFromGoogleApi(photos):
     """This function loops through the photos element returned
