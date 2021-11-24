@@ -2,3 +2,5 @@ numpy
 geolib
 datetime
 livepopulartimes
+timezonefinder
+pytz

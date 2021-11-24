@@ -5,6 +5,10 @@ import requests
 import os
 from geolib import geohash
 from decimal import Decimal
+import math
+from timezonefinder import TimezoneFinder
+from datetime import datetime
+import pytz
 
 from utils import dynamodb
 
@@ -25,6 +29,18 @@ def decimal_serializer(o):
     if isinstance(o, Decimal):
         return number_str(o)
     raise TypeError(repr(o) + " is not JSON serializable")
+
+def custom_next(my_list):
+    try:
+        return next(i for i in range(len(my_list)) if my_list[i] != 0)
+    except Exception:
+        return -1
+    
+def custom_reversed_next(my_list):
+    try:
+        return next(i for i in reversed(range(len(my_list))) if my_list[i] != 0)
+    except Exception:
+        return -1
 
 def destinationPoint(lat, lng, brng, dist, index):
     '''
@@ -242,6 +258,14 @@ def addExtraInfoToPlaces(places):
         place["price_level"] = ret["price_level"] if "price_level" in ret else ""
         place["photos"] = ret["photos"] if "photos" in ret else []
         place["reviews"] = ret["reviews"] if "reviews" in ret else []
+        place["open_hours"] = [
+            {
+                "day": x["name"],
+                "hour_open": custom_next(x["data"]) + 1,
+                "hour_close": custom_reversed_next(x["data"]) + 1
+            }
+            for x in place["populartimes"]
+        ]
 
         new_places.append(place)
     
@@ -449,6 +473,66 @@ def getNearbyFromBestTime(lat, lng):
     }
     response = requests.request("GET", url, params=params)
     print(response.json())
+
+def addInfoToReturnedPlaces(places, latitude, longitude):
+    """
+    This function adds the distance, the photos, and the open now bool
+
+    TODO: Query place photos before returning informations
+    Args:
+        places (list): List of places to complete
+    """
+    new_places = []
+
+    for place in places:
+        place["open_now"] = isPlaceOpen(place)
+        place["distance"] = distance((latitude, longitude), (float(place["coordinates"]["lat"]), float(place["coordinates"]["lng"])))
+        new_places.append(place)
+    
+    return new_places
+
+def isPlaceOpen(place):
+    """[summary]
+
+    Args:
+        place ([type]): [description]
+    """
+    latitude = place["coordinates"]["lat"]
+    longitude = place["coordinates"]["lng"]
+
+    zone = TimezoneFinder().timezone_at(lng=longitude, lat=latitude)
+    current_hour = datetime.now(pytz.timezone(zone)).hour
+    current_day_of_week = datetime.now(pytz.timezone(zone)).weekday()
+
+    ret = (place["open_hours"][current_day_of_week]["hour_open"] <= current_hour < place["open_hours"][current_day_of_week]["hour_close"])
+
+    return ret
+
+def distance(origin, destination):
+    """
+    Calculate the Haversine distance.
+
+    Args
+        origin : tuple of float (lat, long)
+        destination : tuple of float (lat, long)
+
+    Returns:
+        distance_in_km : float
+
+    """
+    lat1, lon1 = origin
+    lat2, lon2 = destination
+    radius = 6371  # km
+
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2) * math.sin(dlat / 2) +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+         math.sin(dlon / 2) * math.sin(dlon / 2))
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    d = radius * c
+
+    return d
 
 if __name__ == "__main__":
     places = fetchPlacesFromApis(["u09mw"])

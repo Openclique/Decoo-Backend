@@ -43,6 +43,8 @@ def nearby(event, context):
     # We query the places from database
     places = dynamodb.fetchPlacesFromDatabase(to_fetch)
 
+    places = functions.addInfoToReturnedPlaces(places, float(body["latitude"]), float(body["longitude"]))
+
     response = {
         "statusCode": 200,
         "body": json.dumps(places, default=functions.decimal_serializer)
@@ -120,26 +122,24 @@ if __name__ == "__main__":
         # We get a list of all geohashes in the user's radius
         hashes = functions.getGeohashesInRadius(float(latitude), float(longitude), RADIUS)
         print(hashes)
+
         # We remember that this area has been queried for the updating cron job
-        dynamodb.rememberCurrentQuery(hashes["five_digits"])
+        # dynamodb.rememberCurrentQuery(hashes["five_digits"])
 
         # Then we check which geohashes need to be created
         items = dynamodb.getGeohashesStatus(hashes["five_digits"])
 
-        # We then fetch informations for all geohashes that need to be updated
-        # places = functions.fetchPlacesFromApis(items["to_update"])
+        to_fetch = items["up_to_date"]
+        to_fetch.extend(items["to_update"])
 
         # We query the places from database
-        places = dynamodb.fetchPlacesFromDatabase(items["up_to_date"])
+        places = dynamodb.fetchPlacesFromDatabase(to_fetch)
 
-        response = {
-            "statusCode": 200,
-            "body": json.dumps(places, default=functions.decimal_serializer)
-        }
+        places = functions.addInfoToReturnedPlaces(places, latitude, longitude)
 
-        return response
+        return places
     
-    # print(nearby_test(40.8558834, 2.3814812))
+    # print(nearby_test(48.866667, 2.333333))
     # updater({}, {})
     # res = functions.get_place_info_from_google("ChIJieGyj-HHwoARK-hwrwbi76E")
     # print(res.keys())
@@ -155,8 +155,28 @@ if __name__ == "__main__":
 
     # ADD EXTRA INFO TO ALL CURRENT PLACES
     # places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
-    # places = functions.addExtraInfoToPlaces(places)
-    # dynamodb.batchUpdatePlaces(places)
+    # i = 1
+    # for place in places:
+    #     print(i)
+    #     if len(place["populartimes"]) > 0 and "name" in place["populartimes"][0].keys() and "data" in place["populartimes"][0].keys():
+    #         i += 1
+    #         place["open_hours"] = [
+    #             {
+    #                 "day": x["name"],
+    #                 "hour_open": functions.custom_next(x["data"]) + 1,
+    #                 "hour_close": functions.custom_reversed_next(x["data"]) + 1
+    #             }
+    #             for x in place["populartimes"]
+    #         ]
+    # start_index = 0
+    # stop_index = 0
+    # while stop_index < len(places):
+    #     stop_index += 50
+    #     if stop_index > len(places):
+    #         stop_index = len(places)
+    #     print(f"Updating from {start_index} to {stop_index}")
+    #     dynamodb.batchUpdatePlaces(places[start_index:stop_index])
+    #     start_index = stop_index
 
     # TEST BEST TIME API IN A GEOHASH LIST
     # places = dynamodb.fetchPlacesFromDatabase(["u09mw"])
@@ -170,15 +190,63 @@ if __name__ == "__main__":
     # functions.getNearbyFromBestTime(51.5121172,-0.126173)
 
     # TEST GETTING PLACES FROM EXTERNET API FOR GEOHASH LIST
-    hashes = functions.getGeohashesInRadius(34.0395553,-118.2633982,5)
-    print(hashes["five_digits"])
-    places = functions.fetchPlacesFromApis(hashes["five_digits"])
-    final_places = []
-    for place in places:
-        if place not in final_places:
-            final_places.append(place)
+    # hashes = functions.getGeohashesInRadius(34.0395553,-118.2633982,5)
+    # print(hashes["five_digits"])
+    # places = functions.fetchPlacesFromApis(hashes["five_digits"])
+    # final_places = []
+    # for place in places:
+    #     if place not in final_places:
+    #         final_places.append(place)
 
-    print(f"{len(final_places)} will be updated")
+    # print(f"{len(final_places)} will be updated")
 
-    # And we save the places in the database
-    dynamodb.batchUpdatePlaces(final_places)
+    # # And we save the places in the database
+    # dynamodb.batchUpdatePlaces(final_places)
+
+
+    open_hours = [
+        {
+            "day": "Monday",
+            "hour_close": 14,
+            "hour_open": 9
+        },
+        {
+        "day": "Tuesday",
+        "hour_close": 14,
+        "hour_open": 9
+        },
+        {
+        "day": "Wednesday",
+        "hour_close": 22,
+        "hour_open": 5
+        },
+        {
+        "day": "Thursday",
+        "hour_close": 0,
+        "hour_open": 0
+        },
+        {
+        "day": "Friday",
+        "hour_close": 14,
+        "hour_open": 9
+        },
+        {
+        "day": "Saturday",
+        "hour_close": 14,
+        "hour_open": 9
+        },
+        {
+        "day": "Sunday",
+        "hour_close": 14,
+        "hour_open": 9
+        }
+    ]
+    coordinates = {
+        "lng": 2.333333,
+        "lat": 48.866667
+    }
+    place = {
+        "open_hours": open_hours,
+        "coordinates": coordinates
+    }
+    functions.isPlaceOpen(place)
