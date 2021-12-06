@@ -249,7 +249,7 @@ def getGeohashesThatNeedToBeUpdated():
 
     now = datetime.now().timestamp()
     fifteen_min_before = now - 900
-    two_hours_ago = now - (900 * 8)
+    # two_hours_ago = now - (900 * 8)
     
     d_table = dynamodb.Table(GEOHASHES_TABLE)
 
@@ -257,8 +257,7 @@ def getGeohashesThatNeedToBeUpdated():
     # or more than 2 hours ago.
     hashes_to_update = d_table.scan(
         FilterExpression=Attr('last_query').gte(Decimal(fifteen_min_before)) |
-        (Attr('last_query').lte(Decimal(two_hours_ago)) & Attr('last_update').lte(Decimal(two_hours_ago)) |
-        Attr('last_update').eq(Decimal(0.0))
+        Attr('last_update').eq(Decimal(0.0)
     ),
     )["Items"]
 
