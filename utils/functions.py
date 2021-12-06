@@ -9,6 +9,7 @@ import math
 from timezonefinder import TimezoneFinder
 from datetime import datetime
 import pytz
+import time
 
 from utils import dynamodb
 
@@ -134,15 +135,30 @@ def get_info_from_google_api(latitude, longitude):
 
     for type in types:
 
+        to_add = []
+        
         # Building the base url
         url = f"{NEARBY_URL}location={latitude},{longitude}&radius={2400}&type={type}&key={GOOGLE_API_KEY}"
         print(url)
 
-        # Making a request to google places api
-        res = requests.get(url).json()
-        print(f"{len(res['results'])} places found")
+        while True:
 
-        final_ret.extend(res["results"])
+            # Making a request to google places api
+            res = requests.get(url).json()
+
+            to_add.extend(res["results"])
+            print(res.keys())
+            print(len(res["results"]))
+            if not "next_page_token" in res.keys():
+                break
+
+            url = f"{NEARBY_URL}location={latitude},{longitude}&radius={2400}&type={type}&key={GOOGLE_API_KEY}&pagetoken={res['next_page_token']}"
+
+            time.sleep(2)
+        
+        print(f"{len(to_add)} places have been found for {type}s")
+
+        final_ret.extend(to_add)
 
     return final_ret
 

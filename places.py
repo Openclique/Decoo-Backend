@@ -175,7 +175,7 @@ if __name__ == "__main__":
     # TEST BEST TIME NEARBY API
     # functions.getNearbyFromBestTime(51.5121172,-0.126173)
 
-    # TEST GETTING PLACES FROM EXTERNET API FOR GEOHASH LIST
+    # TEST GETTING PLACES FROM EXTERNALf API FOR GEOHASH LIST
     # hashes = functions.getGeohashesInRadius(34.0395553,-118.2633982,5)
     # print(hashes["five_digits"])
     # places = functions.fetchPlacesFromApis(hashes["five_digits"])
@@ -189,50 +189,52 @@ if __name__ == "__main__":
     # # And we save the places in the database
     # dynamodb.batchUpdatePlaces(final_places)
 
+    # places = functions.get_info_from_google_api(34.0395553,-118.2633982)
+    # print(len(places))
 
-    open_hours = [
-        {
-            "day": "Monday",
-            "hour_close": 14,
-            "hour_open": 9
-        },
-        {
-        "day": "Tuesday",
-        "hour_close": 14,
-        "hour_open": 9
-        },
-        {
-        "day": "Wednesday",
-        "hour_close": 22,
-        "hour_open": 5
-        },
-        {
-        "day": "Thursday",
-        "hour_close": 0,
-        "hour_open": 0
-        },
-        {
-        "day": "Friday",
-        "hour_close": 14,
-        "hour_open": 9
-        },
-        {
-        "day": "Saturday",
-        "hour_close": 14,
-        "hour_open": 9
-        },
-        {
-        "day": "Sunday",
-        "hour_close": 14,
-        "hour_open": 9
-        }
-    ]
-    coordinates = {
-        "lng": 2.333333,
-        "lat": 48.866667
-    }
-    place = {
-        "open_hours": open_hours,
-        "coordinates": coordinates
-    }
-    functions.isPlaceOpen(place)
+    # open_hours = [
+    #     {
+    #         "day": "Monday",
+    #         "hour_close": 14,
+    #         "hour_open": 9
+    #     },
+    #     {
+    #     "day": "Tuesday",
+    #     "hour_close": 14,
+    #     "hour_open": 9
+    #     },
+    #     {
+    #     "day": "Wednesday",
+    #     "hour_close": 22,
+    #     "hour_open": 5
+    #     },
+    #     {
+    #     "day": "Thursday",
+    #     "hour_close": 0,
+    #     "hour_open": 0
+    #     },
+    #     {
+    #     "day": "Friday",
+    #     "hour_close": 14,
+    #     "hour_open": 9
+    #     },
+    #     {
+    #     "day": "Saturday",
+    #     "hour_close": 14,
+    #     "hour_open": 9
+    #     },
+    #     {
+    #     "day": "Sunday",
+    #     "hour_close": 14,
+    #     "hour_open": 9
+    #     }
+    # ]
+    # coordinates = {
+    #     "lng": 2.333333,
+    #     "lat": 48.866667
+    # }
+    # place = {
+    #     "open_hours": open_hours,
+    #     "coordinates": coordinates
+    # }
+    # functions.isPlaceOpen(place)
