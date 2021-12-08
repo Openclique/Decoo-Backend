@@ -317,6 +317,12 @@ def addExtraInfoToPlaces(places):
     
     return new_places
 
+def no_blacklisted_words(categories):
+    for category in categories:
+        if "restaurant" in category or "Restaurant" in category or "Gas station" in category or "gas station" in category:
+            return False
+    return True
+
 def fetchPlacesFromApis(geohashes, get_new_points):
     '''
     This function takes in a list of geohashes and queries informations from external APIs
@@ -336,13 +342,23 @@ def fetchPlacesFromApis(geohashes, get_new_points):
         places = get_places_around_location(coords.lat,coords.lon)
 
         # Removing duplicates
-        final_places = []
+        intermediate_places = []
+        intermediate_places_ids = []
         for place in places:
-            if place not in final_places:
-                final_places.append(place)
+            if place not in intermediate_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in intermediate_places_ids:
+                intermediate_places.append(place)
+                intermediate_places_ids.append(place["place_id"])
         
         # Add some infos
-        final_places = addExtraInfoToPlaces(final_places)
+        intermediate_places = addExtraInfoToPlaces(intermediate_places)
+
+        # Removing duplicates again just to be sure
+        final_places = []
+        final_places_ids = []
+        for place in intermediate_places:
+            if place not in final_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in final_places_ids:
+                final_places.append(place)
+                final_places_ids.append(place["place_id"])
 
         # Then update places
         dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
