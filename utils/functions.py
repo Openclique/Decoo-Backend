@@ -19,6 +19,9 @@ TYPE = "bar"
 RADIUS=5000
 GOOGLE_API_KEY=os.getenv("GOOGLE_API_KEY")
 BEST_TIMES_API_KEY=os.getenv("BEST_TIMES_API_KEY")
+BAR_KEYWORDS = ['bar', 'bistro']
+PUB_KEYWORDS = ['pub', 'brewery', 'lounge', 'beer']
+CLUB_KEYWORDS = ['club']
 
 class number_str(float):
     def __init__(self, o):
@@ -312,16 +315,33 @@ def addExtraInfoToPlaces(places):
             }
             for x in place["populartimes"]
         ]
+        place["type"] = getType(place)
 
         new_places.append(place)
     
     return new_places
 
+def getType(place):
+    """[summary]
+
+    Args:
+        place ([type]): [description]
+    """
+    for category in place["categories"]:
+        if category.lower() in CLUB_KEYWORDS:
+            return "club"
+        elif category.lower() in PUB_KEYWORDS:
+            return "pub"
+        elif category.lower() in BAR_KEYWORDS:
+            return "bar"
+        else:
+            return "none"
+
 def no_blacklisted_words(categories):
     for category in categories:
-        if "restaurant" in category or "Restaurant" in category or "Gas station" in category or "gas station" in category:
-            return False
-    return True
+        if category.lower() in BAR_KEYWORDS or category.lower() in PUB_KEYWORDS or category.lower() in CLUB_KEYWORDS:
+            return True
+    return False
 
 def fetchPlacesFromApis(geohashes, get_new_points):
     '''
