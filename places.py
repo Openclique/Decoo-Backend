@@ -3,6 +3,7 @@ from utils import functions, dynamodb
 from decimal import Decimal
 
 RADIUS = 5 # km
+MAX_PLACES_PER_QUERY = 40
 
 def all(event, context):
     """
@@ -43,13 +44,13 @@ def nearby(event, context):
     # We query the places from database
     places = dynamodb.fetchPlacesFromDatabase(to_fetch)
 
-    places = functions.addInfoToReturnedPlaces(places, float(body["user_latitude"]), float(body["user_longitude"]), float(body["epoch"]))
+    places = functions.addInfoToReturnedPlaces(places, float(body["user_latitude"]), float(body["user_longitude"]), float(body["latitude"]), float(body["longitude"]), float(body["epoch"]))
 
-    places = sorted(places, key=lambda place: place["distance"])
+    places = sorted(places, key=lambda place: place["distance_from_query"])
 
     response = {
         "statusCode": 200,
-        "body": json.dumps(places, default=functions.decimal_serializer)
+        "body": json.dumps(places[:MAX_PLACES_PER_QUERY], default=functions.decimal_serializer)
     }
 
     return response
