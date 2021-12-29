@@ -43,7 +43,9 @@ def nearby(event, context):
     # We query the places from database
     places = dynamodb.fetchPlacesFromDatabase(to_fetch)
 
-    places = functions.addInfoToReturnedPlaces(places, float(body["latitude"]), float(body["longitude"]))
+    places = functions.addInfoToReturnedPlaces(places, float(body["user_latitude"]), float(body["user_longitude"]), float(body["epoch"]))
+
+    places = sorted(places, key=lambda place: place["distance"])
 
     response = {
         "statusCode": 200,
@@ -121,7 +123,7 @@ if __name__ == "__main__":
         # We query the places from database
         places = dynamodb.fetchPlacesFromDatabase(to_fetch)
 
-        places = functions.addInfoToReturnedPlaces(places, latitude, longitude)
+        places = functions.addInfoToReturnedPlaces(places, latitude, longitude, 0.0)
 
         return places
     
@@ -140,7 +142,13 @@ if __name__ == "__main__":
     # functions.getPhotosFromGoogleApi(res["photos"])
 
     # ADD EXTRA INFO TO ALL CURRENT PLACES
-    # places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
+    places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
+    keywords = []
+    for place in places:
+        for category in place["categories"]:
+            if category not in keywords:
+                keywords.append(category)
+    print(keywords)
     # i = 1
     # for place in places:
     #     print(i)

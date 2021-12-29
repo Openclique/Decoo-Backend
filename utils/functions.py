@@ -536,7 +536,7 @@ def getNearbyFromBestTime(lat, lng):
     response = requests.request("GET", url, params=params)
     print(response.json())
 
-def addInfoToReturnedPlaces(places, latitude, longitude):
+def addInfoToReturnedPlaces(places, latitude, longitude, epoch):
     """
     This function adds the distance, the photos, and the open now bool
 
@@ -547,17 +547,18 @@ def addInfoToReturnedPlaces(places, latitude, longitude):
     new_places = []
 
     for place in places:
-        place["open_now"] = isPlaceOpen(place)
+        place["open_now"] = isPlaceOpen(place, epoch)
         place["distance"] = distance((latitude, longitude), (float(place["coordinates"]["lat"]), float(place["coordinates"]["lng"])))
         new_places.append(place)
     
     return new_places
 
-def isPlaceOpen(place):
+def isPlaceOpen(place, epoch):
     """[summary]
 
     Args:
         place ([type]): [description]
+        epoch (float): [description]
     """
     latitude = place["coordinates"]["lat"]
     longitude = place["coordinates"]["lng"]
