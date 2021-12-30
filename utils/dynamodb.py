@@ -92,6 +92,8 @@ def batchUpdatePlaces(places=[], get_new_points=False):
     print(f"Running batch update on {len(places)} places")
     with dynamodb.Table(PLACES_TABLE).batch_writer() as batch:
 
+        added_geohashes = []
+
         # We loop through each place
         for place in places:
 
@@ -101,11 +103,15 @@ def batchUpdatePlaces(places=[], get_new_points=False):
             place["id"] = five_digits_hash
             place["geohash"] = ten_digits_hash
 
-            # Then we update the geohashes table
-            ddb_data = json.loads(json.dumps(place, default=functions.decimal_serializer), parse_float=Decimal)
+            if place["geohash"] not in added_geohashes:
+                
+                added_geohashes.append(place["geohash"])
 
-            # Then we update the places table
-            batch.put_item(Item=ddb_data)
+                # Then we update the geohashes table
+                ddb_data = json.loads(json.dumps(place, default=functions.decimal_serializer), parse_float=Decimal)
+
+                # Then we update the places table
+                batch.put_item(Item=ddb_data)
 
     # We update the db to remember that we queried new points
     if get_new_points:
