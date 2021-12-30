@@ -25,7 +25,7 @@ BEST_TIMES_API_KEY=os.getenv("BEST_TIMES_API_KEY")
 BAR_KEYWORDS = ['bar', 'bistro']
 PUB_KEYWORDS = ['pub', 'brewery', 'lounge', 'beer']
 CLUB_KEYWORDS = ['club']
-BLACKLISTED_KEYWORDS = ['store', 'tabac', 'pmu', 'shop', 'newsstand', 'bakery', 'tea house', 'espresso', 'lottery retailer', 'coffee', 'wholesaler', 'printer', 'fitness', 'school', 'dance', 'brasserie', 'grill', 'sports', 'futsal', 'park', 'soccer', 'market', 'hypermarket', 'field', 'press', 'bank', 'atm', 'cafeteria', 'patisserie', 'supermarket', 'tavern', 'pool']
+BLACKLISTED_KEYWORDS = ['restaurant', 'store', 'tabac', 'pmu', 'shop', 'newsstand', 'bakery', 'tea house', 'espresso', 'lottery retailer', 'wholesaler', 'printer', 'fitness', 'school', 'dance', 'grill', 'sports', 'futsal', 'park', 'soccer', 'market', 'hypermarket', 'field', 'press', 'bank', 'atm', 'patisserie', 'supermarket', 'pool']
 
 class number_str(float):
     def __init__(self, o):
@@ -208,6 +208,7 @@ def get_places_around_location(latitude, longitude):
         else:
             success = True
             to_add["has_current_popularity"] = True if to_add["current_popularity"] else False
+            to_add["current_popularity"] = 0 if not to_add["current_popularity"] else to_add["current_popularity"]
 
         if success:
             places.append(to_add)
