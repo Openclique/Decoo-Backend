@@ -373,11 +373,11 @@ def getType(place):
     """
     for category in place["categories"]:
         if category.lower() in CLUB_KEYWORDS:
-            return "club"
+            return "Club"
         elif category.lower() in PUB_KEYWORDS:
-            return "pub"
+            return "Pub"
         elif category.lower() in BAR_KEYWORDS:
-            return "bar"
+            return "Bar"
     return "none"
 
 def no_blacklisted_words(categories):
