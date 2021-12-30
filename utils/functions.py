@@ -378,8 +378,7 @@ def getType(place):
             return "pub"
         elif category.lower() in BAR_KEYWORDS:
             return "bar"
-        else:
-            return "none"
+    return "none"
 
 def no_blacklisted_words(categories):
     for word in BLACKLISTED_KEYWORDS:
