@@ -261,10 +261,12 @@ def updatePlacesFromApis(geohashes, get_new_points):
             # We remove duplicate places
             final_places = []
             final_places_ids = []
+            final_places_geohashes = []
             for place in new_places:
-                if place not in final_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in final_places_ids:
+                if place not in final_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in final_places_ids and place["geohash"] not in final_places_geohashes:
                     final_places.append(place)
                     final_places_ids.append(place["place_id"])
+                    final_places_geohashes.append(place["geohash"])
             dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
 
             # And finally we update dynamodb to remember that these hashes have been updated
@@ -275,10 +277,12 @@ def updatePlacesFromApis(geohashes, get_new_points):
     # We remove duplicate places
     final_places = []
     final_places_ids = []
+    final_places_geohashes = []
     for place in new_places:
-        if place not in final_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in final_places_ids:
+        if place not in final_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in final_places_ids and place["geohash"] not in final_places_geohashes:
             final_places.append(place)
             final_places_ids.append(place["place_id"])
+            final_places_geohashes.append(place["geohash"])
 
     dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
 
@@ -408,10 +412,12 @@ def fetchPlacesFromApis(geohashes, get_new_points):
         # Removing duplicates
         intermediate_places = []
         intermediate_places_ids = []
+        intermediate_places_geohashes = []
         for place in places:
-            if place not in intermediate_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in intermediate_places_ids:
+            if place not in intermediate_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in intermediate_places_ids and place["geohash"] not in intermediate_places_geohashes:
                 intermediate_places.append(place)
                 intermediate_places_ids.append(place["place_id"])
+                intermediate_places_geohashes.append(place["geohash"])
         
         # Add some infos
         intermediate_places = addExtraInfoToPlaces(intermediate_places)
@@ -419,10 +425,12 @@ def fetchPlacesFromApis(geohashes, get_new_points):
         # Removing duplicates again just to be sure
         final_places = []
         final_places_ids = []
+        final_places_geohashes = []
         for place in intermediate_places:
-            if place not in final_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in final_places_ids:
+            if place not in final_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in final_places_ids and place["geohash"] not in final_places_geohashes:
                 final_places.append(place)
                 final_places_ids.append(place["place_id"])
+                final_places_geohashes.append(place["geohash"])
 
         # Then update places
         dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
