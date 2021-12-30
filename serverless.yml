@@ -44,12 +44,14 @@ functions:
     - httpApi:
         path: /places/nearby
         method: post
+    timeout: 20
   allPlaces:
     handler: places.all
     events:
     - httpApi:
         path: /places/all
         method: get
+    timeout: 20
 
   # These are cron jobs 
   updater:

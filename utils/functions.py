@@ -372,13 +372,18 @@ def getType(place):
     Args:
         place ([type]): [description]
     """
-    for category in place["categories"]:
-        if category.lower() in CLUB_KEYWORDS:
-            return "Club"
-        elif category.lower() in PUB_KEYWORDS:
-            return "Pub"
-        elif category.lower() in BAR_KEYWORDS:
-            return "Bar"
+    for word in CLUB_KEYWORDS:
+        for category in place["categories"]:
+            if word.lower() in category.lower():
+                return "Club"
+    for word in PUB_KEYWORDS:
+        for category in place["categories"]:
+            if word.lower() in category.lower():
+                return "Pub"
+    for word in BAR_KEYWORDS:
+        for category in place["categories"]:
+            if word.lower() in category.lower():
+                return "Bar"
     return "none"
 
 def no_blacklisted_words(categories):
