@@ -190,7 +190,13 @@ def get_places_around_location(latitude, longitude):
     # Then we make queries to livepopulartimes to get popular times + current popularity for each point
     for place in google_search:
         address = f"({place['name']}) {place['vicinity']}"
-        to_add = livepopulartimes.get_populartimes_by_address(address)
+        try:
+            to_add = livepopulartimes.get_populartimes_by_address(address)
+        except Exception as err:
+            print("error happened")
+            print(err)
+            to_add = {}
+
         success = False
 
         # If we couldn't find the proper informations for this place, we try to get it from best times
