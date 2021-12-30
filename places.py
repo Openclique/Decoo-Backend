@@ -48,6 +48,8 @@ def nearby(event, context):
 
     places = sorted(places, key=lambda place: place["distance_from_query"])
 
+    print(f"{len(places)} places will be returned")
+
     response = {
         "statusCode": 200,
         "body": json.dumps(places[:MAX_PLACES_PER_QUERY], default=functions.decimal_serializer)
