@@ -52,11 +52,11 @@ functions:
         method: get
 
   # These are cron jobs 
-  # updater:
-  #   handler: places.updater # Monitoring of all live centers
-  #   events:
-  #     - schedule: rate(30 minutes)
-  #   timeout: 600
+  updater:
+    handler: places.updater # Monitoring of all live centers
+    events:
+      - schedule: rate(30 minutes)
+    timeout: 600
 
 
 resources:

@@ -130,7 +130,7 @@ if __name__ == "__main__":
     
     # print(nearby_test(48.866667, 2.333333))
     # updater({}, {})
-    # res = functions.get_place_info_from_google("ChIJieGyj-HHwoARK-hwrwbi76E")
+    # res = functions.get_place_info_from_google("ChIJ2dMYKRBl5kcRhPAECdgskFk")
     # print(res.keys())
     # print(res["international_phone_number"])
     # print(res["website"])
@@ -140,16 +140,17 @@ if __name__ == "__main__":
 
     # GETTING PHOTOS FROM GOOGLE API
     # TODO: HOW TO SAVE THE IMAGES ?
-    # functions.getPhotosFromGoogleApi(res["photos"])
+    # photos = functions.uploadPhotosFromGoogleApi(res["photos"], res)
+    # print(photos)
 
     # ADD EXTRA INFO TO ALL CURRENT PLACES
-    places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
-    keywords = []
-    for place in places:
-        for category in place["categories"]:
-            if category not in keywords:
-                keywords.append(category)
-    print(keywords)
+    # places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
+    # keywords = []
+    # for place in places:
+    #     for category in place["categories"]:
+    #         if category not in keywords:
+    #             keywords.append(category)
+    # print(keywords)
     # i = 1
     # for place in places:
     #     print(i)

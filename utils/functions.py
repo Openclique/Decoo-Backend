@@ -10,6 +10,9 @@ from timezonefinder import TimezoneFinder
 from datetime import datetime
 import pytz
 import time
+import boto3
+from botocore.exceptions import NoCredentialsError
+import mimetypes
 
 from utils import dynamodb
 
@@ -22,6 +25,7 @@ BEST_TIMES_API_KEY=os.getenv("BEST_TIMES_API_KEY")
 BAR_KEYWORDS = ['bar', 'bistro']
 PUB_KEYWORDS = ['pub', 'brewery', 'lounge', 'beer']
 CLUB_KEYWORDS = ['club']
+BLACKLISTED_KEYWORDS = ['store', 'tabac', 'pmu', 'shop', 'newsstand', 'bakery', 'tea house', 'espresso', 'lottery retailer', 'coffee', 'wholesaler', 'printer', 'fitness', 'school', 'dance', 'brasserie', 'grill', 'sports', 'futsal', 'park', 'soccer', 'market', 'hypermarket', 'field', 'press', 'bank', 'atm', 'cafeteria', 'patisserie', 'supermarket', 'tavern', 'pool']
 
 class number_str(float):
     def __init__(self, o):
@@ -190,13 +194,14 @@ def get_places_around_location(latitude, longitude):
         success = False
 
         # If we couldn't find the proper informations for this place, we try to get it from best times
-        if not to_add['coordinates'] or not to_add['popular_times'] or not to_add["current_popularity"]:
+        if not to_add['coordinates'] or not to_add['popular_times'] or not to_add["populartimes"]:
             print("\nCouldn't find informations on google, trying best times")
             # to_add, success = buildPlaceInfoFromBestTime(to_add)
             # print("Place after best time info:")
             # print(to_add)
         else:
             success = True
+            to_add["has_current_popularity"] = True if to_add["current_popularity"] else False
 
         if success:
             places.append(to_add)
@@ -221,6 +226,9 @@ def updatePlacesFromApis(geohashes, get_new_points):
 
     for place in old_places:
 
+        if not place["has_current_popularity"]:
+            continue
+
         if place['id'] not in hashes_updated:
             hashes_updated.append(place['id'])
 
@@ -241,13 +249,16 @@ def updatePlacesFromApis(geohashes, get_new_points):
         if success:
             new_places.append(place)
         
+        # Every 50 place we update the database
         if index % 50 == 0:
 
             # We remove duplicate places
             final_places = []
+            final_places_ids = []
             for place in new_places:
-                if place not in final_places:
+                if place not in final_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in final_places_ids:
                     final_places.append(place)
+                    final_places_ids.append(place["place_id"])
             dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
 
             # And finally we update dynamodb to remember that these hashes have been updated
@@ -257,9 +268,11 @@ def updatePlacesFromApis(geohashes, get_new_points):
     
     # We remove duplicate places
     final_places = []
+    final_places_ids = []
     for place in new_places:
-        if place not in final_places:
+        if place not in final_places and no_blacklisted_words(place["categories"]) and place["place_id"] not in final_places_ids:
             final_places.append(place)
+            final_places_ids.append(place["place_id"])
 
     dynamodb.batchUpdatePlaces(final_places, get_new_points=get_new_points)
 
@@ -268,26 +281,43 @@ def updatePlacesFromApis(geohashes, get_new_points):
 
     return True
 
-def getPhotosFromGoogleApi(photos):
+def upload_file(remote_url, bucket, file_name):
+    s3 = boto3.client('s3', aws_access_key_id="AKIAXG6IVGNTLJE6ZD7F", aws_secret_access_key="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")
+    try:
+        imageResponse = requests.get(remote_url, stream=True).raw
+        s3.upload_fileobj(imageResponse, bucket, f"{file_name}.png", ExtraArgs={'ACL':'public-read'})
+        print("Upload Successful")
+        return True
+    except FileNotFoundError:
+        print("The file was not found")
+        return False
+    except NoCredentialsError:
+        print("Credentials not available")
+        return False
+
+def uploadPhotosFromGoogleApi(photos, place):
     """This function loops through the photos element returned
     by google place detail api, and create images from there
 
     Args:
         photos (list of photos): List of photos elements
+        place (google place): place informations
+    
+    Returns:
+        photos: List of photos with aws s3 url added
     """
     index = 1
     for photo in photos:
         ref = photo["photo_reference"]
         url = f"https://maps.googleapis.com/maps/api/place/photo?photo_reference={ref}&key={GOOGLE_API_KEY}"
+        is_success = upload_file(url, "mappn-images", f"{place['place_id']}/image_{index}")
 
-        res_d = requests.get(url)
-
-        with open(f"image_{index}.jpeg", "wb") as f:
-            for chunk in res_d:
-                if chunk:
-                    f.write(chunk)
-
+        if is_success:
+            photo["url"] = f"http://s3-us-west-1.amazonaws.com/mappn-images/{place['place_id']}/image_{index}.png"
+            
         index += 1
+    
+    return photos
 
 def addExtraInfoToPlaces(places):
     """This function adds the website, phone number, and other informations
@@ -305,7 +335,15 @@ def addExtraInfoToPlaces(places):
         place["phone_number"] = ret["international_phone_number"] if "international_phone_number" in ret else ret["phone_number"] if "phone_number" in ret else ""
         place["website"] = ret["website"] if "website" in ret else ""
         place["price_level"] = ret["price_level"] if "price_level" in ret else ""
-        place["photos"] = ret["photos"] if "photos" in ret else []
+
+        # If there is some photos we store them in aws s3
+        if "photos" in ret:
+            # photos_to_add = uploadPhotosFromGoogleApi(ret["photos"], ret)
+            # place["photos"] = photos_to_add
+            place["photos"] = ret["photos"]
+        else:
+            place["photos"] = []
+
         place["reviews"] = ret["reviews"] if "reviews" in ret else []
         place["open_hours"] = [
             {
@@ -338,10 +376,11 @@ def getType(place):
             return "none"
 
 def no_blacklisted_words(categories):
-    for category in categories:
-        if category.lower() in BAR_KEYWORDS or category.lower() in PUB_KEYWORDS or category.lower() in CLUB_KEYWORDS:
-            return True
-    return False
+    for word in BLACKLISTED_KEYWORDS:
+        for category in categories:
+            if word.lower() in category.lower():
+                return False
+    return True
 
 def fetchPlacesFromApis(geohashes, get_new_points):
     '''
@@ -570,6 +609,7 @@ def addInfoToReturnedPlaces(places, user_latitude, user_longitude, latitude, lon
         place["open_now"] = isPlaceOpen(place, epoch)
         place["distance"] = distance((user_latitude, user_longitude), (float(place["coordinates"]["lat"]), float(place["coordinates"]["lng"])))
         place["distance_from_query"] = distance((latitude, longitude), (float(place["coordinates"]["lat"]), float(place["coordinates"]["lng"])))
+
         new_places.append(place)
     
     return new_places
