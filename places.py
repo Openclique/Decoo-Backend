@@ -15,7 +15,7 @@ def all(event, context):
 
     response = {
         "statusCode": 200,
-        "body": json.dumps(places, parse_float=Decimal)
+        "body": json.dumps(places, default=functions.decimal_serializer)
     }
 
     return response
@@ -146,13 +146,19 @@ if __name__ == "__main__":
     # print(photos)
 
     # ADD EXTRA INFO TO ALL CURRENT PLACES
-    # places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
-    # keywords = []
-    # for place in places:
-    #     for category in place["categories"]:
-    #         if category not in keywords:
-    #             keywords.append(category)
-    # print(keywords)
+    places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
+    print(len(places))
+    keywords = []
+    for place in places:
+        if not place["phone_number"]:
+            place["phone_number"] = "0000000000"
+        if not place["price_level"]:
+            place["price_level"] = 1
+        if not "rating" in place.keys() or ("rating" in place.keys() and not place["rating"]):
+            place["rating"] = 10
+        if not "rating_n" in place.keys() or ("rating_n" in place.keys() and not place["rating_n"]):
+            place["rating_n"] = 1
+    dynamodb.batchUpdatePlaces(places)
     # i = 1
     # for place in places:
     #     print(i)
