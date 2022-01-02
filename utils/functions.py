@@ -22,10 +22,17 @@ TYPE = "bar"
 RADIUS=5000
 GOOGLE_API_KEY=os.getenv("GOOGLE_API_KEY")
 BEST_TIMES_API_KEY=os.getenv("BEST_TIMES_API_KEY")
+AWS_ACCESS_KEY=os.getenv("AWS_ACCESS_KEY")
+AWS_SECRET_KEY=os.getenv("AWS_SECRET_KEY")
 BAR_KEYWORDS = ['bar', 'bistro', 'cafe']
 PUB_KEYWORDS = ['pub', 'brewery', 'lounge', 'beer']
 CLUB_KEYWORDS = ['club']
 BLACKLISTED_KEYWORDS = ['restaurant', 'store', 'tabac', 'pmu', 'shop', 'newsstand', 'bakery', 'tea house', 'espresso', 'lottery retailer', 'wholesaler', 'printer', 'fitness', 'school', 'dance', 'grill', 'sports', 'futsal', 'park', 'soccer', 'market', 'hypermarket', 'field', 'press', 'bank', 'atm', 'patisserie', 'supermarket', 'pool']
+
+LIMIT=100
+VERSION = "20180604"
+CLIENT_ID = "5ZHWR3EUGRQR3GEBKMRMNIOPRIC1BFIJKFNWHBTJPU3BLRSJ"
+CLIENT_SECRET = "3ASIOGMFANYYKE5OGNYBGQ3QZ02SS2NOEMMIFVQIQYTPFMEU"
 
 class number_str(float):
     def __init__(self, o):
@@ -202,6 +209,11 @@ def get_places_around_location(latitude, longitude):
         # If we couldn't find the proper informations for this place, we try to get it from best times
         if not to_add['coordinates'] or not to_add['popular_times'] or not to_add["populartimes"]:
             print("\nCouldn't find informations on google, trying best times")
+            print("GOOGLE'S INFO:")
+            print(to_add)
+            forecast = searchVenueFromBestTimes(to_add)
+            print("BEST TIMES INFO:")
+            print(forecast)
             # to_add, success = buildPlaceInfoFromBestTime(to_add)
             # print("Place after best time info:")
             # print(to_add)
@@ -289,7 +301,7 @@ def updatePlacesFromApis(geohashes, get_new_points):
     return True
 
 def upload_file(remote_url, bucket, file_name):
-    s3 = boto3.client('s3', aws_access_key_id="AKIAXG6IVGNTLJE6ZD7F", aws_secret_access_key="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")
+    s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY, aws_secret_access_key=AWS_SECRET_KEY)
     try:
         imageResponse = requests.get(remote_url, stream=True).raw
         s3.upload_fileobj(imageResponse, bucket, f"{file_name}.png", ExtraArgs={'ACL':'public-read'})
@@ -475,6 +487,68 @@ def buildPlaceInfoFromBestTime(place, update=False):
         place["current_popularity"] = live_info["analysis"]["venue_live_busyness"]
 
     return place, True
+
+def exploreSearchByFoursquare(latitude, longitude):
+    """[summary]
+    """
+    url = f"https://api.foursquare.com/v2/venues/explore?&client_id={CLIENT_ID}&client_secret={CLIENT_SECRET}&v={VERSION}&ll={latitude},{longitude}&radius={RADIUS}&limit={LIMIT}"
+    results = requests.get(url).json()["response"]['groups'][0]['items']
+
+    return results
+
+def getVenueDetailsbyFoursquare(venue_id):
+    """[summary]
+
+    Args:
+        venue_id ([type]): [description]
+    """
+    url = f"https://api.foursquare.com/v2/venues/{venue_id}?&client_id={CLIENT_ID}&client_secret={CLIENT_SECRET}&v={VERSION}"
+
+    ret = requests.get(url).json()["response"]["venue"]
+
+    return ret
+
+def getVenueHoursByFoursquare(venue_id):
+    """[summary]
+
+    Args:
+        venue_id ([type]): [description]
+    """
+    url = f"https://api.foursquare.com/v2/venues/{venue_id}/hours?&client_id={CLIENT_ID}&client_secret={CLIENT_SECRET}&v={VERSION}"
+
+    ret = requests.get(url).json()
+
+    return ret
+
+def getVenueEventsByFoursquare(venue_id):
+    """[summary]
+
+    Args:
+        venue_id ([type]): [description]
+    """
+    url = f"https://api.foursquare.com/v2/venues/{venue_id}/events?&client_id={CLIENT_ID}&client_secret={CLIENT_SECRET}&v={VERSION}"
+
+    ret = requests.get(url).json()
+
+    return ret
+
+def searchVenueFromBestTimes(place):
+    """[summary]
+    TODO: Use this endpoint on each place to get extra informations about a place
+
+    Args:
+        place ([type]): [description]
+    """
+    url = "https://besttime.app/api/v1/venues/search"
+
+    params = {
+        'api_key_private': BEST_TIMES_API_KEY,
+        'q': f'{place["name"]} {place["address"]}'
+    }
+
+    ret = requests.request("POST", url, params=params).json()
+
+    return ret
 
 def getForecastFromBestTimes(place):
     """[summary]

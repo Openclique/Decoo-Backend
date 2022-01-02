@@ -146,19 +146,19 @@ if __name__ == "__main__":
     # print(photos)
 
     # ADD EXTRA INFO TO ALL CURRENT PLACES
-    places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
-    print(len(places))
-    keywords = []
-    for place in places:
-        if not place["phone_number"]:
-            place["phone_number"] = "0000000000"
-        if not place["price_level"]:
-            place["price_level"] = 1
-        if not "rating" in place.keys() or ("rating" in place.keys() and not place["rating"]):
-            place["rating"] = 10
-        if not "rating_n" in place.keys() or ("rating_n" in place.keys() and not place["rating_n"]):
-            place["rating_n"] = 1
-    dynamodb.batchUpdatePlaces(places)
+    # places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
+    # print(len(places))
+    # keywords = []
+    # for place in places:
+    #     if not place["phone_number"]:
+    #         place["phone_number"] = "0000000000"
+    #     if not place["price_level"]:
+    #         place["price_level"] = 1
+    #     if not "rating" in place.keys() or ("rating" in place.keys() and not place["rating"]):
+    #         place["rating"] = 10
+    #     if not "rating_n" in place.keys() or ("rating_n" in place.keys() and not place["rating_n"]):
+    #         place["rating_n"] = 1
+    # dynamodb.batchUpdatePlaces(places)
     # i = 1
     # for place in places:
     #     print(i)
@@ -209,6 +209,18 @@ if __name__ == "__main__":
 
     # places = functions.get_info_from_google_api(34.0395553,-118.2633982)
     # print(len(places))
+
+    # places = functions.get_places_around_location(48.873617002148976,2.336631714742512)
+    # places = functions.exploreSearchByFoursquare(48.873617002148976,2.336631714742512)
+    # print(len(places))
+    place = functions.getVenueDetailsbyFoursquare("53c10d23498e6c9cbdc6296e")
+    print(place)
+    place = functions.getVenueEventsByFoursquare("53c10d23498e6c9cbdc6296e")
+    print(place)
+    # print(places[20]["venue"]["id"])
+    # print(places[0]["venue"]["id"])
+    # print(places[10])
+    # print(places[20])
 
     # open_hours = [
     #     {
