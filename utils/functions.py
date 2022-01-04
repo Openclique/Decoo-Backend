@@ -13,6 +13,7 @@ import time
 import boto3
 from botocore.exceptions import NoCredentialsError
 import mimetypes
+import safegraphql.client as sgql
 
 from utils import dynamodb
 
@@ -24,6 +25,7 @@ GOOGLE_API_KEY=os.getenv("GOOGLE_API_KEY")
 BEST_TIMES_API_KEY=os.getenv("BEST_TIMES_API_KEY")
 AWS_ACCESS_KEY=os.getenv("AWS_ACCESS_KEY")
 AWS_SECRET_KEY=os.getenv("AWS_SECRET_KEY")
+SAFEGRAPH_API_KEY=os.getenv("SAFEGRAPH_API_KEY")
 BAR_KEYWORDS = ['bar', 'bistro', 'cafe']
 PUB_KEYWORDS = ['pub', 'brewery', 'lounge', 'beer']
 CLUB_KEYWORDS = ['club']
@@ -47,13 +49,16 @@ def decimal_serializer(o):
 
 def custom_next(my_list):
     try:
-        return next(i for i in range(len(my_list)) if my_list[i] != 0)
+        return next(i for i in range(len(my_list)) if my_list[i] != 0 and i >= 4)
     except Exception:
         return -1
     
 def custom_reversed_next(my_list):
     try:
-        return next(i for i in reversed(range(len(my_list))) if my_list[i] != 0)
+        value = next(i for i in reversed(range(len(my_list))) if my_list[i] != 0)
+        if value == 23:
+            custom_next()
+        return value
     except Exception:
         return -1
 
@@ -144,7 +149,7 @@ def get_info_from_google_api(latitude, longitude):
         [{obj}]: Returns a list of places around current user's location
     """
 
-    types = ["bar", "cafe", "night_club"]
+    types = ["bar", "night_club"]
     final_ret = []
 
     for type in types:
@@ -209,18 +214,18 @@ def get_places_around_location(latitude, longitude):
         # If we couldn't find the proper informations for this place, we try to get it from best times
         if not to_add['coordinates'] or not to_add['popular_times'] or not to_add["populartimes"]:
             print("\nCouldn't find informations on google, trying best times")
-            print("GOOGLE'S INFO:")
-            print(to_add)
-            forecast = searchVenueFromBestTimes(to_add)
-            print("BEST TIMES INFO:")
-            print(forecast)
+            # print("GOOGLE'S INFO:")
+            # print(to_add)
+            # forecast = searchVenueFromBestTimes(to_add)
+            # print("BEST TIMES INFO:")
+            # print(forecast)
             # to_add, success = buildPlaceInfoFromBestTime(to_add)
             # print("Place after best time info:")
             # print(to_add)
         else:
             success = True
             to_add["has_current_popularity"] = True if to_add["current_popularity"] else False
-            to_add["current_popularity"] = 0 if not to_add["current_popularity"] else to_add["current_popularity"]
+            to_add["current_popularity"] = 1 if not to_add["current_popularity"] else to_add["current_popularity"]
 
         if success:
             places.append(to_add)
@@ -245,7 +250,7 @@ def updatePlacesFromApis(geohashes, get_new_points):
 
     for place in old_places:
 
-        if not place["has_current_popularity"]:
+        if not place["has_current_popularity"] or not isPlaceOpen(place, 0.0, use_epoch=False):
             continue
 
         if place['id'] not in hashes_updated:
@@ -338,6 +343,53 @@ def uploadPhotosFromGoogleApi(photos, place):
     
     return photos
 
+def createOpenHours(populartimes):
+    """This function creates the open hours object
+    from the populartimes informationss
+
+    Args:
+        populartimes (array): populartimes from livepopulartimes python library
+
+    Returns:
+        List of objects
+    """
+    to_ret = []
+    for time in populartimes:
+        skip = False
+        to_add = {}
+        if time[1]:
+            for x in time[1]:
+                if x[1] > 0 and not skip:
+                    to_add["open"] = x[0]
+                    skip = True
+            to_add["close"] = time[1][-1][0] + 1
+            to_ret.append(to_add)
+        else:
+            to_ret.append({})
+
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    final = []
+    index = 0
+    skipped = False
+    for info in to_ret:
+        if index == 0 and not skipped:
+            skipped = True
+        else:
+            final.append({
+                "day": days[index],
+                "hour_close": info["close"] if "close" in info else -1,
+                "hour_open": info["open"] if "open" in info else -1
+            })
+            index += 1
+
+    final.append({
+        "day": days[index],
+        "hour_close": to_ret[0]["close"] if "close" in to_ret[0] else -1,
+        "hour_open": to_ret[0]["open"] if "open" in to_ret[0] else -1
+    })
+
+    return final
+
 def addExtraInfoToPlaces(places):
     """This function adds the website, phone number, and other informations
     to the place information.
@@ -364,14 +416,7 @@ def addExtraInfoToPlaces(places):
             place["photos"] = []
 
         place["reviews"] = ret["reviews"] if "reviews" in ret else []
-        place["open_hours"] = [
-            {
-                "day": x["name"],
-                "hour_open": custom_next(x["data"]) + 1,
-                "hour_close": custom_reversed_next(x["data"]) + 1
-            }
-            for x in place["populartimes"]
-        ]
+        place["open_hours"] = createOpenHours(place["popular_times"])
         place["type"] = getType(place)
 
         new_places.append(place)
@@ -487,6 +532,34 @@ def buildPlaceInfoFromBestTime(place, update=False):
         place["current_popularity"] = live_info["analysis"]["venue_live_busyness"]
 
     return place, True
+
+def searchPlacesBySafeGraph(city):
+    """[summary]
+    """
+    sgql_client = sgql.HTTP_Client(apikey=SAFEGRAPH_API_KEY)
+
+    naics = 722410
+    cols = [
+        'location_name',
+        'street_address',
+        'city',
+        'latitude',
+        'longitude',
+        'region',
+        'brands',
+        'raw_visit_counts',
+        'visits_by_day',
+        'distance_from_home',
+        'median_dwell',
+        'related_same_day_brand',
+        'related_same_month_brand',
+        'popularity_by_hour',
+        'device_type'
+    ]
+
+    ret = sgql_client.search(product = 'monthly_patterns', date = '2021-07-06', city = city, naics_code = naics, columns = cols, max_results = 5)
+
+    return ret
 
 def exploreSearchByFoursquare(latitude, longitude):
     """[summary]
@@ -691,7 +764,7 @@ def addInfoToReturnedPlaces(places, user_latitude, user_longitude, latitude, lon
     new_places = []
 
     for place in places:
-        place["open_now"] = isPlaceOpen(place, epoch)
+        place["open_now"] = isPlaceOpen(place, epoch, use_epoch=True)
         place["distance"] = distance((user_latitude, user_longitude), (float(place["coordinates"]["lat"]), float(place["coordinates"]["lng"])))
         place["distance_from_query"] = distance((latitude, longitude), (float(place["coordinates"]["lat"]), float(place["coordinates"]["lng"])))
 
@@ -699,19 +772,25 @@ def addInfoToReturnedPlaces(places, user_latitude, user_longitude, latitude, lon
     
     return new_places
 
-def isPlaceOpen(place, epoch):
+def isPlaceOpen(place, epoch, use_epoch=False):
     """[summary]
 
     Args:
         place ([type]): [description]
         epoch (float): [description]
     """
+
     latitude = place["coordinates"]["lat"]
     longitude = place["coordinates"]["lng"]
 
-    zone = TimezoneFinder().timezone_at(lng=longitude, lat=latitude)
-    current_hour = datetime.now(pytz.timezone(zone)).hour
-    current_day_of_week = datetime.now(pytz.timezone(zone)).weekday()
+    if not use_epoch:
+        zone = TimezoneFinder().timezone_at(lng=longitude, lat=latitude)
+        current_hour = datetime.now(pytz.timezone(zone)).hour
+        current_day_of_week = datetime.now(pytz.timezone(zone)).weekday()
+
+    else:
+        current_hour = datetime.fromtimestamp(epoch).hour
+        current_day_of_week = datetime.fromtimestamp(epoch).weekday()
 
     ret = (place["open_hours"][current_day_of_week]["hour_open"] <= current_hour < place["open_hours"][current_day_of_week]["hour_close"])
 

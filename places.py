@@ -7,7 +7,7 @@ MAX_PLACES_PER_QUERY = 40
 
 def all(event, context):
     """
-    This function returns all our points of interest with a current_popularity not null
+    This function returns all our points of interest with a current_popularity not None
     """
     places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
 
@@ -147,6 +147,10 @@ if __name__ == "__main__":
 
     # ADD EXTRA INFO TO ALL CURRENT PLACES
     # places = dynamodb.fetchAllPlacesFromDatabase("places-prod")
+    # for place in places:
+    #     place["open_hours"] = functions.createOpenHours(place["popular_times"])
+    # dynamodb.batchUpdatePlaces(places)
+
     # print(len(places))
     # keywords = []
     # for place in places:
@@ -210,13 +214,14 @@ if __name__ == "__main__":
     # places = functions.get_info_from_google_api(34.0395553,-118.2633982)
     # print(len(places))
 
+    # TEST FOURSQUARE
     # places = functions.get_places_around_location(48.873617002148976,2.336631714742512)
     # places = functions.exploreSearchByFoursquare(48.873617002148976,2.336631714742512)
     # print(len(places))
-    place = functions.getVenueDetailsbyFoursquare("53c10d23498e6c9cbdc6296e")
-    print(place)
-    place = functions.getVenueEventsByFoursquare("53c10d23498e6c9cbdc6296e")
-    print(place)
+    # place = functions.getVenueDetailsbyFoursquare("53c10d23498e6c9cbdc6296e")
+    # print(place)
+    # place = functions.getVenueEventsByFoursquare("53c10d23498e6c9cbdc6296e")
+    # print(place)
     # print(places[20]["venue"]["id"])
     # print(places[0]["venue"]["id"])
     # print(places[10])
@@ -269,3 +274,18 @@ if __name__ == "__main__":
     # }
     # functions.isPlaceOpen(place)
     
+    # to_build = [{}]
+    # ret = functions.searchPlacesBySafeGraph("Los Angeles")
+
+    # for tag in ret:
+    #     index = 0
+    #     for place_info in ret[tag]:
+    #         if index >= len(to_build):
+    #             to_build.append({})
+    #         to_build[index][tag] = place_info
+    #         index += 1
+
+    # print(to_build)
+    # print(places)
+
+    # updater({}, {})
