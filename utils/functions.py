@@ -12,8 +12,7 @@ import pytz
 import time
 import boto3
 from botocore.exceptions import NoCredentialsError
-import mimetypes
-import safegraphql.client as sgql
+# import safegraphql.client as sgql
 
 from utils import dynamodb
 

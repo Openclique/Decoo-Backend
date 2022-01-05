@@ -4,3 +4,4 @@ datetime
 livepopulartimes
 timezonefinder
 pytz
+safegraphql
