@@ -52,7 +52,7 @@ def nearby(event, context):
 
     response = {
         "statusCode": 200,
-        "body": json.dumps(places, default=functions.decimal_serializer)
+        "body": json.dumps(places[:MAX_PLACES_PER_QUERY], default=functions.decimal_serializer)
     }
 
     return response
